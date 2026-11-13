@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: #f5f2ec;
+  color: #20302f;
+  font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input, textarea, select, button { font-family: inherit; }
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid rgba(180, 83, 26, .35);
+  outline-offset: 1px;
+}
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: #cfc9bd; border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+.label { @apply block text-xs font-medium text-stone-500 mb-1; }
+.input { @apply w-full rounded-md border border-stone-300 bg-white px-2 py-1.5 text-sm text-ink; }
+.textarea { @apply w-full rounded-md border border-stone-300 bg-white px-2 py-1.5 text-sm leading-6 text-ink resize-y; }
+.card { @apply rounded-xl border border-stone-200 bg-white shadow-card; }
+.btn { @apply inline-flex items-center justify-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40; }
+.btn-primary { @apply bg-warm text-white hover:bg-[#9c4413]; }
+.btn-ghost { @apply border border-stone-300 bg-white text-ink hover:bg-stone-50; }
+.btn-danger { @apply border border-red-200 bg-red-50 text-red-700 hover:bg-red-100; }
+.chip { @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium; }
+
+/* 只有分镜那一段横向滚动：细一点的滚动条，别抢视觉。 */
+.scroll-thin::-webkit-scrollbar { height: 8px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #d8d2c6; border-radius: 8px; }
+.scroll-thin { scrollbar-width: thin; }

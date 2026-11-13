@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "revision": 2,
+  "status": "confirmed",
+  "createdAt": "2026-11-12",
+  "note": "三张立绘已由用户确认暂定稿。原图 nina/aton/dundun.png 保留；cutout/ 下为抠成透明底、去掉右下角水印的图层，其中 *-clean.png 是按实测嘴部 bbox 抹掉原嘴的无嘴底图（样片使用这一版），*-cutout.png 保留原嘴仅作备份。calibration.json 记录实测嘴 bbox（mouthRect）、缩放后嘴宽高（mouthSize）与肤色，口型贴图严格按这些值对齐。config/characters.json 已换成这三人并写入音色，config/providers.json 已接通 edge-tts。动画样片脚本 scripts/demo_animation.py 是独立验证链路，尚未合并进主导出。吨吨泰文名待补。",
+  "revisions": [
+    {
+      "revision": 1,
+      "date": "2026-11-12",
+      "note": "首版三人立绘"
+    },
+    {
+      "revision": 2,
+      "date": "2026-11-12",
+      "note": "修复妮娜与阿顿下半身被画布底边裁断、脚和鞋完全缺失的问题；两张重新生成，吨吨原本即完整全身故保持不变。三人均已确认从头顶到鞋底完整可见。"
+    }
+  ],
+  "style": {
+    "label": "美式成人动画情景喜剧 · 扁平卡通",
+    "reference": "用户提供的《恶搞之家》风格截图，仅作画风参照",
+    "anchor": "均匀粗黑闭合描线 / 纯色平涂无渐变 / 简化几何人体 / 大圆白眼配小黑瞳 / 有限色板 / 单人全身正面含双脚与鞋 / 纯浅灰背景",
+    "copyright": "三个角色均为原创设计，不复制任何现有动画角色的外形、发型或服装"
+  },
+  "composition": {
+    "description": "生成新角色时必须复用的构图约束，避免再次出现下半身裁切",
+    "rules": [
+      "完整全身像：头顶到双脚鞋底全部画出并完整落在画布内",
+      "人物居中，占画面高度约 68%，头顶上方留约 15% 空白，鞋底下方留约 17% 空白",
+      "必须明确写出两只完整的脚和鞋子的颜色与款式",
+      "严禁在膝盖、小腿、脚踝处截断，禁止裤腿延伸出画面底边",
+      "出图后必须逐张目检脚部是否完整，再覆盖入库"
+    ]
+  },
+  "selection": {
+    "field": "selected",
+    "mode": "checkbox",
+    "description": "后续剧本页按 selected 勾选角色，勾选结果写入镜头 characterIds 后参与视频生成；本轮尚未实现该 UI 与渲染接入"
+  },
+  "expansion": {
+    "field": "locked",
+    "description": "新增角色时重新生成该角色资产并往 characters 数组追加一项，已确认角色 locked 置 true 后不再被改动"
+  },
+  "asset": {
+    "watermarked": false,
+    "watermarkNote": "原始三张 PNG 右下角仍带「AI生成 / WORKBUDDY」水印；正式用于合成的是 cutout/*.png —— 已用连通域抠图并把水印矩形置透明，成片中不含水印",
+    "size": "1024x1536",
+    "background": "纯浅灰不透明",
+    "fullBodyVerified": true,
+    "mouthCalibration": {
+      "method": "scripts/probe_mouth.py 在原图上做暗色连通域检测，取脸下半部最靠下且居中的块作为嘴 bbox",
+      "note": "不再使用目测比例；之前 (0.5,0.5) 硬编码导致阿顿下偏 22px、吨吨左偏 25px"
+    }
+  },
+  "characters": [
+    {
+      "id": "char-a",
+      "name": "妮娜",
+      "nameTh": "นีน่า",
+      "role": "女主 / 妻子",
+      "age": 28,
+      "ageRange": "25-33",
+      "image": "nina.png",
+      "url": "/assets/characters/nina.png",
+      "coreAppearance": "齐肩黑色短发带齐刘海整块色块、圆脸、暖棕肤色、细眉、大圆白眼小黑瞳；浅杏色短袖上衣、深蓝长裤、米色帆布包、白色系带帆布鞋；微笑、正面完整全身站姿",
+      "selected": true,
+      "locked": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "char-b",
+      "name": "阿顿",
+      "nameTh": "ต้น",
+      "role": "男主 / 丈夫",
+      "age": 30,
+      "ageRange": "25-33",
+      "image": "aton.png",
+      "url": "/assets/characters/aton.png",
+      "coreAppearance": "短黑发整块色块、偏瘦、小麦肤色、浓眉、大圆白眼小黑瞳；浅蓝绿色短袖 polo 衫、卡其长裤、棕色手表、深棕色休闲皮鞋；微笑、正面完整全身站姿",
+      "selected": true,
+      "locked": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "char-c",
+      "name": "吨吨",
+      "nameTh": "",
+      "role": "孩子",
+      "age": 5,
+      "ageRange": "5",
+      "image": "dundun.png",
+      "url": "/assets/characters/dundun.png",
+      "coreAppearance": "大头小身约 1:2.5、短黑发整块色块、圆脸、暖棕肤色、细眉、大圆白眼小黑瞳；亮黄色短袖 T 恤、浅棕短裤、白袜、米棕运动鞋；咧嘴笑、正面完整全身站姿",
+      "selected": true,
+      "locked": false,
+      "status": "confirmed"
+    }
+  ]
+}

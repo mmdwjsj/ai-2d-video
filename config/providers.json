@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "note": "密钥只从环境变量读取，不写进配置文件。MP4 导出走本地渲染，不需要任何密钥；图像/视频/TTS 默认 unconfigured，调用时明确提示，不静默产出假素材。",
+  "text": {
+    "active": "local",
+    "local": { "kind": "rule-based", "description": "确定性规则：双语剧本骨架、句子级分镜、场景关键词匹配，无需联网" },
+    "http": {
+      "kind": "openai-compatible",
+      "baseUrlEnv": "THAI_VIDEO_TEXT_BASE_URL",
+      "apiKeyEnv": "THAI_VIDEO_TEXT_API_KEY",
+      "modelEnv": "THAI_VIDEO_TEXT_MODEL",
+      "description": "阶段二接入：任何兼容 /chat/completions 的服务"
+    }
+  },
+  "image": {
+    "active": "unconfigured",
+    "http": {
+      "kind": "openai-compatible-image",
+      "baseUrlEnv": "THAI_VIDEO_IMAGE_BASE_URL",
+      "apiKeyEnv": "THAI_VIDEO_IMAGE_API_KEY",
+      "modelEnv": "THAI_VIDEO_IMAGE_MODEL"
+    }
+  },
+  "video": {
+    "active": "unconfigured",
+    "description": "复杂动作镜头（走路/骑摩托车/跳舞）在阶段二～三接入 AI 视频模型"
+  },
+  "tts": {
+    "active": "command",
+    "command": "python",
+    "args": ["-m", "edge_tts", "--text", "{text}", "--voice", "{voice}", "--write-media", "{output}"],
+    "voices": {
+      "zh": "zh-CN-XiaoxiaoNeural",
+      "th": "th-TH-PremwadeeNeural"
+    },
+    "outputDir": "assets/audio/tts",
+    "outputExt": "mp3",
+    "timeoutMs": 60000,
+    "description": "已接通 edge-tts（本机需 python -m pip install edge-tts，联网但无需密钥）。角色级音色写在 config/characters.json 的 voices 里，优先于这里的默认音色；合成出的 mp3 由 Provider 自动转 48k 立体声 WAV。若离线或命令失败，单句会退回字幕并明确告警，不会伪造人声。",
+    "perCharacterVoices": {
+      "zh": {
+        "char-a": "zh-CN-XiaoxiaoNeural",
+        "char-b": "zh-CN-YunxiNeural",
+        "char-c": "zh-CN-YunxiaNeural"
+      },
+      "th": {
+        "char-a": "th-TH-PremwadeeNeural",
+        "char-b": "th-TH-NiwatNeural",
+        "char-c": "th-TH-PremwadeeNeural"
+      }
+    }
+  }
+}

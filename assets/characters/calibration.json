@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "size": [
+    1024,
+    1536
+  ],
+  "characters": {
+    "nina": {
+      "name": "妮娜",
+      "image": "assets/characters/cutout/nina-cutout.png",
+      "cleanImage": "assets/characters/cutout/nina-clean.png",
+      "width": 1024,
+      "height": 1536,
+      "backgroundRGB": [
+        227,
+        221,
+        217
+      ],
+      "skinRGB": [
+        208,
+        157,
+        114
+      ],
+      "mouth": [
+        0.49169999999999997,
+        0.25195
+      ],
+      "mouthRect": [
+        0.4629,
+        0.248,
+        0.5205,
+        0.2559
+      ],
+      "mouthSize": [
+        58.982399999999984,
+        12.134400000000028
+      ],
+      "top": 0.076,
+      "bottom": 0.952,
+      "bbox": [
+        0.33,
+        0.73
+      ]
+    },
+    "aton": {
+      "name": "阿顿",
+      "image": "assets/characters/cutout/aton-cutout.png",
+      "cleanImage": "assets/characters/cutout/aton-clean.png",
+      "width": 1024,
+      "height": 1536,
+      "backgroundRGB": [
+        227,
+        223,
+        223
+      ],
+      "skinRGB": [
+        217,
+        160,
+        111
+      ],
+      "mouth": [
+        0.50485,
+        0.24445
+      ],
+      "mouthRect": [
+        0.4697,
+        0.2409,
+        0.54,
+        0.248
+      ],
+      "mouthSize": [
+        71.98720000000003,
+        10.905599999999993
+      ],
+      "top": 0.088,
+      "bottom": 0.94,
+      "bbox": [
+        0.29,
+        0.71
+      ]
+    },
+    "dundun": {
+      "name": "吨吨",
+      "image": "assets/characters/cutout/dundun-cutout.png",
+      "cleanImage": "assets/characters/cutout/dundun-clean.png",
+      "width": 1024,
+      "height": 1536,
+      "backgroundRGB": [
+        225,
+        221,
+        214
+      ],
+      "skinRGB": [
+        197,
+        140,
+        93
+      ],
+      "mouth": [
+        0.52445,
+        0.4756
+      ],
+      "mouthRect": [
+        0.4678,
+        0.4564,
+        0.5811,
+        0.4948
+      ],
+      "mouthSize": [
+        116.01919999999996,
+        58.98240000000007
+      ],
+      "top": 0.16,
+      "bottom": 0.885,
+      "bbox": [
+        0.19,
+        0.81
+      ]
+    }
+  }
+}

@@ -1,0 +1,50 @@
+/**
+ * 阶段四接入示例。**当前不是编译单元**（后缀 .example），避免第一阶段为了
+ * 一个尚未使用的组合把 remotion 拉进依赖。
+ *
+ * 启用步骤：
+ * 1. 根目录安装 remotion / @remotion/cli；
+ * 2. 本文件改名为 Composition.tsx，并在 tsconfig.json 的 include 里加入该目录；
+ * 3. server 的 video.render 任务用 video-renderer/commands.ts 的
+ *    remotionRenderCommand 调用它，props 由 computeTimeline 生成；
+ * 4. 字幕层按 exportMode 渲染中文字幕 / 泰语字幕 / 双语字幕。
+ */
+import React from 'react';
+import { AbsoluteFill, Sequence, useCurrentFrame } from 'remotion';
+
+type TimelineShot = {
+  shotId: string;
+  startSec: number;
+  durationSec: number;
+  subtitleMode: 'zh' | 'th' | 'bilingual';
+};
+
+export const ThaiDailyLifeComposition: React.FC<{
+  fps: number;
+  shots: TimelineShot[];
+  width: number;
+  height: number;
+}> = ({ fps, shots, width, height }) => {
+  const frame = useCurrentFrame();
+  return (
+    <AbsoluteFill style={{ width, height, backgroundColor: '#f7f1e5' }}>
+      {shots.map((shot) => (
+        <Sequence
+          key={shot.shotId}
+          from={Math.round(shot.startSec * fps)}
+          durationInFrames={Math.round(shot.durationSec * fps)}
+        >
+          <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center' }}>
+            {/* 背景图 → 人物图层 → 表情/嘴型动画 → 字幕层，顺序不要颠倒 */}
+            <div data-shot={shot.shotId} data-subtitle-mode={shot.subtitleMode}>
+              镜头 {shot.shotId}（阶段四替换为实际素材）
+            </div>
+          </AbsoluteFill>
+        </Sequence>
+      ))}
+      <AbsoluteFill style={{ fontSize: 12, opacity: 0.4, padding: 12 }}>
+        frame {frame}
+      </AbsoluteFill>
+    </AbsoluteFill>
+  );
+};

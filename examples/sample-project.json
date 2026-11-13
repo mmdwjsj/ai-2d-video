@@ -1,0 +1,804 @@
+{
+  "meta": {
+    "id": "proj-2294d5eb2216",
+    "name": "示例：下班后去夜市吃冬阴功",
+    "description": "五分钟上手示例：中泰双语剧本 + 自动分镜",
+    "exportMode": "zh",
+    "createdAt": "2026-11-10T10:39:16.295Z",
+    "updatedAt": "2026-11-10T10:39:16.460Z"
+  },
+  "characters": [
+    {
+      "id": "char-a",
+      "name": "妮娜",
+      "nameTh": "นีน่า",
+      "ageSetting": "26 岁",
+      "occupation": "曼谷上班族",
+      "personality": "开朗自然，爱聊日常小事",
+      "background": "在曼谷工作三年，住在 BTS 沿线的公寓，喜欢下班后逛夜市",
+      "referenceImages": {
+        "front": "",
+        "side": "",
+        "back": "",
+        "fullBody": "",
+        "halfBody": "",
+        "face": "",
+        "expressions": [],
+        "actions": []
+      },
+      "wardrobe": [
+        "浅色衬衫 + 西裤",
+        "周末 T 恤 + 牛仔裤"
+      ],
+      "accessories": [
+        "帆布包",
+        "细项链"
+      ],
+      "voices": {
+        "zh": {
+          "engine": "",
+          "voice": "",
+          "speed": 1,
+          "volume": 1,
+          "emotion": "自然"
+        },
+        "th": {
+          "engine": "",
+          "voice": "",
+          "speed": 1,
+          "volume": 1,
+          "emotion": "เป็นธรรมชาติ"
+        }
+      },
+      "relations": [
+        {
+          "characterId": "char-b",
+          "label": "同事 / 朋友"
+        },
+        {
+          "characterId": "char-c",
+          "label": "常去的小店老板"
+        }
+      ],
+      "identityLock": {
+        "enabled": true,
+        "coreAppearance": "齐肩黑发、圆脸、暖棕肤色、细眉、自然淡妆",
+        "notes": "生成新镜头时必须附带正面/半身/脸部参考图"
+      },
+      "updatedAt": "2026-11-10T10:39:16.298Z"
+    },
+    {
+      "id": "char-b",
+      "name": "阿顿",
+      "nameTh": "ต้น",
+      "ageSetting": "28 岁",
+      "occupation": "年轻职场人",
+      "personality": "幽默好奇，爱问「为什么」",
+      "background": "土生土长曼谷人，通勤靠 BTS，喜欢把生活琐事讲成段子",
+      "referenceImages": {
+        "front": "",
+        "side": "",
+        "back": "",
+        "fullBody": "",
+        "halfBody": "",
+        "face": "",
+        "expressions": [],
+        "actions": []
+      },
+      "wardrobe": [
+        "polo 衫 + 休闲裤",
+        "连帽外套"
+      ],
+      "accessories": [
+        "双肩包",
+        "手表"
+      ],
+      "voices": {
+        "zh": {
+          "engine": "",
+          "voice": "",
+          "speed": 1,
+          "volume": 1,
+          "emotion": "轻快"
+        },
+        "th": {
+          "engine": "",
+          "voice": "",
+          "speed": 1,
+          "volume": 1,
+          "emotion": "ร่าเริง"
+        }
+      },
+      "relations": [
+        {
+          "characterId": "char-a",
+          "label": "同事 / 朋友"
+        },
+        {
+          "characterId": "char-c",
+          "label": "街坊熟人"
+        }
+      ],
+      "identityLock": {
+        "enabled": true,
+        "coreAppearance": "短黑发、偏瘦、小麦肤色、浓眉、爱笑",
+        "notes": "服装可换，发型与脸型不可变"
+      },
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "char-c",
+      "name": "颂猜叔",
+      "nameTh": "ลุงสมชาย",
+      "ageSetting": "48 岁",
+      "occupation": "社区小店经营者",
+      "personality": "沉稳热情，熟悉街坊大小事",
+      "background": "在老社区经营小餐馆二十多年，认识附近所有人",
+      "referenceImages": {
+        "front": "",
+        "side": "",
+        "back": "",
+        "fullBody": "",
+        "halfBody": "",
+        "face": "",
+        "expressions": [],
+        "actions": []
+      },
+      "wardrobe": [
+        "短袖衬衫 + 围裙",
+        "polo 衫"
+      ],
+      "accessories": [
+        "老式手表",
+        "围裙"
+      ],
+      "voices": {
+        "zh": {
+          "engine": "",
+          "voice": "",
+          "speed": 0.95,
+          "volume": 1,
+          "emotion": "沉稳"
+        },
+        "th": {
+          "engine": "",
+          "voice": "",
+          "speed": 0.95,
+          "volume": 1,
+          "emotion": "สุภาพ"
+        }
+      },
+      "relations": [
+        {
+          "characterId": "char-a",
+          "label": "常来的客人"
+        },
+        {
+          "characterId": "char-b",
+          "label": "从小看着长大的街坊"
+        }
+      ],
+      "identityLock": {
+        "enabled": true,
+        "coreAppearance": "微胖、短灰黑发、宽脸、眼角细纹、常带笑",
+        "notes": "围裙是常用配件但不属于核心外貌"
+      },
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene-street-food",
+      "name": "曼谷街边餐馆",
+      "type": "餐饮",
+      "location": "曼谷老社区街边",
+      "time": "傍晚",
+      "weather": "晴",
+      "lighting": "暖黄路灯 + 招牌光",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "平视中景",
+        "过肩特写",
+        "街边广角"
+      ],
+      "keywords": [
+        "吃",
+        "饭",
+        "餐馆",
+        "点餐",
+        "冬阴功",
+        "美食",
+        "อาหาร"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-night-market",
+      "name": "泰国夜市",
+      "type": "市集",
+      "location": "曼谷夜市摊位间",
+      "time": "夜间",
+      "weather": "闷热",
+      "lighting": "彩灯串 + 摊位暖光",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "低机位广角",
+        "跟拍中景",
+        "摊位特写"
+      ],
+      "keywords": [
+        "夜市",
+        "逛",
+        "买",
+        "小吃",
+        "摊",
+        "ตลาด"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-fresh-market",
+      "name": "当地菜市场",
+      "type": "市集",
+      "location": "社区湿货市场",
+      "time": "清晨",
+      "weather": "晴",
+      "lighting": "自然散射光",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "俯拍摊位",
+        "平视中景"
+      ],
+      "keywords": [
+        "菜市场",
+        "买菜",
+        "香料",
+        "水果",
+        "ตลาดสด"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-convenience-store",
+      "name": "便利店",
+      "type": "日常",
+      "location": "街角 24 小时便利店",
+      "time": "深夜",
+      "weather": "雨后",
+      "lighting": "冷白荧光灯",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "货架中景",
+        "门口广角"
+      ],
+      "keywords": [
+        "便利店",
+        "买水",
+        "支付",
+        "零食",
+        "เซเว่น"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-bts-mrt",
+      "name": "BTS 和 MRT",
+      "type": "交通",
+      "location": "BTS 站台 / 车厢",
+      "time": "早高峰",
+      "weather": "晴",
+      "lighting": "站台日光",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "车厢中景",
+        "站台广角"
+      ],
+      "keywords": [
+        "通勤",
+        "地铁",
+        "BTS",
+        "上班",
+        "迟到",
+        "รถไฟฟ้า"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-apartment",
+      "name": "曼谷公寓",
+      "type": "居家",
+      "location": "公寓客厅 / 阳台",
+      "time": "清晨",
+      "weather": "晴",
+      "lighting": "柔和晨光",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "客厅中景",
+        "阳台远景"
+      ],
+      "keywords": [
+        "家",
+        "起床",
+        "公寓",
+        "做饭",
+        "คอนโด"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-cafe",
+      "name": "咖啡厅",
+      "type": "餐饮",
+      "location": "社区咖啡馆",
+      "time": "午后",
+      "weather": "多云",
+      "lighting": "窗边自然光",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "桌边双人中景",
+        "咖啡特写"
+      ],
+      "keywords": [
+        "咖啡",
+        "聊天",
+        "加班",
+        "คาเฟ่"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-office",
+      "name": "办公室",
+      "type": "职场",
+      "location": "曼谷写字楼开放工位",
+      "time": "工作日白天",
+      "weather": "晴",
+      "lighting": "冷白室内光",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "工位中景",
+        "会议广角"
+      ],
+      "keywords": [
+        "工作",
+        "开会",
+        "办公室",
+        "老板",
+        "ออฟฟิศ"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-school",
+      "name": "学校",
+      "type": "教育",
+      "location": "社区学校门口",
+      "time": "下午",
+      "weather": "晴",
+      "lighting": "明亮日光",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "校门广角",
+        "操场中景"
+      ],
+      "keywords": [
+        "学校",
+        "放学",
+        "学生",
+        "โรงเรียน"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-mall",
+      "name": "商场",
+      "type": "商业",
+      "location": "购物中心中庭",
+      "time": "周末下午",
+      "weather": "晴",
+      "lighting": "室内商场灯",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "中庭广角",
+        "橱窗中景"
+      ],
+      "keywords": [
+        "商场",
+        "逛街",
+        "购物",
+        "ห้าง"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-park",
+      "name": "公园",
+      "type": "休闲",
+      "location": "社区公园",
+      "time": "傍晚",
+      "weather": "微风",
+      "lighting": "金色斜阳",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "长椅中景",
+        "树荫广角"
+      ],
+      "keywords": [
+        "公园",
+        "散步",
+        "跑步",
+        "休息",
+        "สวน"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    },
+    {
+      "id": "scene-street-motorcycle",
+      "name": "街道和摩托车",
+      "type": "交通",
+      "location": "曼谷小巷 / 主路",
+      "time": "白天",
+      "weather": "晴",
+      "lighting": "强烈日光",
+      "backgroundImage": "",
+      "cameraAngles": [
+        "跟拍",
+        "路口广角"
+      ],
+      "keywords": [
+        "摩托车",
+        "打车",
+        "堵车",
+        "街道",
+        "มอเตอร์ไซค์"
+      ],
+      "updatedAt": "2026-11-10T10:39:16.299Z"
+    }
+  ],
+  "script": {
+    "topic": "下班后去夜市吃冬阴功",
+    "inputMode": "topic",
+    "title": "下班后去夜市吃冬阴功｜泰国日常",
+    "structure": "开场吸引点 → 三人日常对话（起因 / 小插曲 / 收尾）→ 一句生活感受旁白",
+    "hook": "在曼谷，下班后去夜市吃冬阴功这样的小事，也能变成一天里最放松的时刻。",
+    "cast": [
+      {
+        "characterId": "char-a",
+        "role": "主视角"
+      },
+      {
+        "characterId": "char-b",
+        "role": "对话搭档"
+      },
+      {
+        "characterId": "char-c",
+        "role": "社区熟人"
+      }
+    ],
+    "lines": [
+      {
+        "id": "line-1",
+        "speakerId": "char-a",
+        "textZh": "下班啦，今天想去哪儿吃？",
+        "textTh": "เลิกงานแล้ว วันนี้ไปกินอะไรดี",
+        "emotion": "轻松",
+        "action": "放下包、看向对方",
+        "sceneSuggestion": "曼谷街边餐馆"
+      },
+      {
+        "id": "line-2",
+        "speakerId": "char-b",
+        "textZh": "这家的冬阴功真的绝了。",
+        "textTh": "ต้มยำร้านนี้อร่อยมากเลยนะ",
+        "emotion": "满足",
+        "action": "端起碗、尝一口",
+        "sceneSuggestion": "曼谷街边餐馆"
+      },
+      {
+        "id": "line-3",
+        "speakerId": "char-c",
+        "textZh": "走，去夜市逛一圈吧！",
+        "textTh": "ไปเดินตลาดนัดกันเถอะ",
+        "emotion": "兴奋",
+        "action": "抬手招呼",
+        "sceneSuggestion": "曼谷街边餐馆"
+      },
+      {
+        "id": "line-4",
+        "speakerId": "char-a",
+        "textZh": "老板，还是老样子，一份。",
+        "textTh": "ลุงครับ ตามเดิมเลยหนึ่งที่",
+        "emotion": "熟络",
+        "action": "举手点单",
+        "sceneSuggestion": "曼谷街边餐馆"
+      },
+      {
+        "id": "line-5",
+        "speakerId": "char-b",
+        "textZh": "今天怎么这么多人啊？",
+        "textTh": "วันนี้คนเยอะขนาดนี้เลยเหรอ",
+        "emotion": "好奇",
+        "action": "左右张望",
+        "sceneSuggestion": "曼谷街边餐馆"
+      }
+    ],
+    "zh": "下班啦，今天想去哪儿吃？\n这家的冬阴功真的绝了。\n走，去夜市逛一圈吧！\n老板，还是老样子，一份。\n今天怎么这么多人啊？",
+    "th": "เลิกงานแล้ว วันนี้ไปกินอะไรดี\nต้มยำร้านนี้อร่อยมากเลยนะ\nไปเดินตลาดนัดกันเถอะ\nลุงครับ ตามเดิมเลยหนึ่งที่\nวันนี้คนเยอะขนาดนี้เลยเหรอ",
+    "narrationZh": "泰国的日常，就藏在这些不起眼的小瞬间里。",
+    "narrationTh": "ชีวิตประจำวันของไทยอยู่ในช่วงเวลาเล็ก ๆ แบบนี้เอง",
+    "emotion": "轻松、温暖、带一点轻喜剧",
+    "actionSuggestion": "以对话和小动作为主；复杂动作（走路/骑摩托/跳舞）留给阶段二 AI 视频镜头",
+    "sceneSuggestions": [
+      "曼谷街边餐馆"
+    ],
+    "shotCountEstimate": 5,
+    "durationEstimateSec": 21.8,
+    "syncPending": false,
+    "updatedAt": "2026-11-10T10:39:16.332Z"
+  },
+  "shots": [
+    {
+      "id": "shot-bf4e415c7082",
+      "order": 1,
+      "durationSec": 4.8,
+      "sceneId": "scene-street-food",
+      "characterIds": [
+        "char-a"
+      ],
+      "action": "放下包、看向对方",
+      "expression": "轻松",
+      "shotSize": "中景",
+      "cameraAngle": "平视",
+      "cameraMove": "固定",
+      "dialogueZh": "下班啦，今天想去哪儿吃？",
+      "dialogueTh": "เลิกงานแล้ว วันนี้ไปกินอะไรดี",
+      "narrationZh": "泰国的日常，就藏在这些不起眼的小瞬间里。",
+      "narrationTh": "ชีวิตประจำวันของไทยอยู่ในช่วงเวลาเล็ก ๆ แบบนี้เอง",
+      "audioZhPath": "",
+      "audioThPath": "",
+      "backgroundImagePath": "",
+      "generatedImagePath": "",
+      "generatedVideoPath": "",
+      "subtitleZh": "下班啦，今天想去哪儿吃？",
+      "subtitleTh": "เลิกงานแล้ว วันนี้ไปกินอะไรดี",
+      "status": "draft",
+      "version": 1,
+      "locked": false,
+      "lastTaskId": "",
+      "updatedAt": "2026-11-10T10:39:16.362Z"
+    },
+    {
+      "id": "shot-112ac480e988",
+      "order": 2,
+      "durationSec": 4.5,
+      "sceneId": "scene-street-food",
+      "characterIds": [
+        "char-b"
+      ],
+      "action": "端起冬阴功，笑着递给同伴",
+      "expression": "惊喜",
+      "shotSize": "近景",
+      "cameraAngle": "平视",
+      "cameraMove": "固定",
+      "dialogueZh": "这家的冬阴功真的绝了。",
+      "dialogueTh": "ต้มยำร้านนี้อร่อยมากเลยนะ",
+      "narrationZh": "",
+      "narrationTh": "",
+      "audioZhPath": "",
+      "audioThPath": "",
+      "backgroundImagePath": "",
+      "generatedImagePath": "",
+      "generatedVideoPath": "",
+      "subtitleZh": "这家的冬阴功真的绝了。",
+      "subtitleTh": "ต้มยำร้านนี้อร่อยมากเลยนะ",
+      "status": "draft",
+      "version": 3,
+      "locked": false,
+      "lastTaskId": "task-261caf119839",
+      "updatedAt": "2026-11-10T10:39:16.459Z"
+    },
+    {
+      "id": "shot-b16a888aa195",
+      "order": 3,
+      "durationSec": 3.7,
+      "sceneId": "scene-night-market",
+      "characterIds": [
+        "char-c",
+        "char-a"
+      ],
+      "action": "抬手招呼",
+      "expression": "兴奋",
+      "shotSize": "过肩中景",
+      "cameraAngle": "略俯",
+      "cameraMove": "固定",
+      "dialogueZh": "走，去夜市逛一圈吧！",
+      "dialogueTh": "ไปเดินตลาดนัดกันเถอะ",
+      "narrationZh": "",
+      "narrationTh": "",
+      "audioZhPath": "",
+      "audioThPath": "",
+      "backgroundImagePath": "",
+      "generatedImagePath": "",
+      "generatedVideoPath": "",
+      "subtitleZh": "走，去夜市逛一圈吧！",
+      "subtitleTh": "ไปเดินตลาดนัดกันเถอะ",
+      "status": "draft",
+      "version": 2,
+      "locked": false,
+      "lastTaskId": "",
+      "updatedAt": "2026-11-10T10:39:16.392Z"
+    },
+    {
+      "id": "shot-d926c009ec4c",
+      "order": 4,
+      "durationSec": 4.5,
+      "sceneId": "scene-street-food",
+      "characterIds": [
+        "char-a"
+      ],
+      "action": "举手点单",
+      "expression": "熟络",
+      "shotSize": "特写",
+      "cameraAngle": "平视",
+      "cameraMove": "缓慢推近",
+      "dialogueZh": "老板，还是老样子，一份。",
+      "dialogueTh": "ลุงครับ ตามเดิมเลยหนึ่งที่",
+      "narrationZh": "",
+      "narrationTh": "",
+      "audioZhPath": "",
+      "audioThPath": "",
+      "backgroundImagePath": "",
+      "generatedImagePath": "",
+      "generatedVideoPath": "",
+      "subtitleZh": "老板，还是老样子，一份。",
+      "subtitleTh": "ลุงครับ ตามเดิมเลยหนึ่งที่",
+      "status": "draft",
+      "version": 1,
+      "locked": false,
+      "lastTaskId": "",
+      "updatedAt": "2026-11-10T10:39:16.362Z"
+    },
+    {
+      "id": "shot-b97144a0597d",
+      "order": 5,
+      "durationSec": 4.5,
+      "sceneId": "scene-convenience-store",
+      "characterIds": [
+        "char-b"
+      ],
+      "action": "左右张望",
+      "expression": "好奇",
+      "shotSize": "广角",
+      "cameraAngle": "低机位",
+      "cameraMove": "固定",
+      "dialogueZh": "今天怎么这么多人啊？",
+      "dialogueTh": "วันนี้คนเยอะขนาดนี้เลยเหรอ",
+      "narrationZh": "",
+      "narrationTh": "",
+      "audioZhPath": "",
+      "audioThPath": "",
+      "backgroundImagePath": "",
+      "generatedImagePath": "",
+      "generatedVideoPath": "",
+      "subtitleZh": "今天怎么这么多人啊？",
+      "subtitleTh": "วันนี้คนเยอะขนาดนี้เลยเหรอ",
+      "status": "draft",
+      "version": 4,
+      "locked": false,
+      "lastTaskId": "",
+      "updatedAt": "2026-11-10T10:39:16.435Z"
+    }
+  ],
+  "exportedAt": "2026-11-10T10:39:32.245Z",
+  "tasks": [
+    {
+      "id": "task-261caf119839",
+      "projectId": "proj-2294d5eb2216",
+      "shotId": "shot-112ac480e988",
+      "type": "shot.image",
+      "status": "completed",
+      "progress": 100,
+      "error": "",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "payload": {
+        "shotId": "shot-112ac480e988",
+        "kind": "image",
+        "characterIds": [
+          "char-b"
+        ],
+        "sceneId": "scene-street-food"
+      },
+      "result": {
+        "generated": false,
+        "notice": "图像 Provider 未配置（阶段二接入）",
+        "shotId": "shot-112ac480e988",
+        "version": 3
+      },
+      "provider": "",
+      "model": "",
+      "cost": 0,
+      "createdAt": "2026-11-10T10:39:16.442Z",
+      "updatedAt": "2026-11-10T10:39:16.466Z",
+      "startedAt": "2026-11-10T10:39:16.445Z",
+      "finishedAt": "2026-11-10T10:39:16.466Z"
+    },
+    {
+      "id": "task-20e5418b9c81",
+      "projectId": "proj-2294d5eb2216",
+      "shotId": null,
+      "type": "storyboard.split",
+      "status": "completed",
+      "progress": 100,
+      "error": "",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "payload": {},
+      "result": {
+        "provider": "local-rule-v1",
+        "shotCount": 5
+      },
+      "provider": "local-rule-v1",
+      "model": "",
+      "cost": 0,
+      "createdAt": "2026-11-10T10:39:16.344Z",
+      "updatedAt": "2026-11-10T10:39:16.366Z",
+      "startedAt": "2026-11-10T10:39:16.348Z",
+      "finishedAt": "2026-11-10T10:39:16.366Z"
+    },
+    {
+      "id": "task-d335bdde7dbb",
+      "projectId": "proj-2294d5eb2216",
+      "shotId": null,
+      "type": "script.generate",
+      "status": "completed",
+      "progress": 100,
+      "error": "",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "payload": {
+        "topic": "下班后去夜市吃冬阴功",
+        "inputMode": "topic"
+      },
+      "result": {
+        "provider": "local-rule-v1",
+        "note": "本地规则生成：泰语为泰国日常口语句式模板（非逐字翻译），正式生成前请人工校对；阶段二配置文本模型后可重写。",
+        "shotCountEstimate": 5
+      },
+      "provider": "local-rule-v1",
+      "model": "",
+      "cost": 0,
+      "createdAt": "2026-11-10T10:39:16.316Z",
+      "updatedAt": "2026-11-10T10:39:16.337Z",
+      "startedAt": "2026-11-10T10:39:16.320Z",
+      "finishedAt": "2026-11-10T10:39:16.337Z"
+    },
+    {
+      "id": "task-b4ca9370ba8e",
+      "projectId": "proj-2294d5eb2216",
+      "shotId": null,
+      "type": "project.init",
+      "status": "completed",
+      "progress": 100,
+      "error": "",
+      "attempts": 1,
+      "maxAttempts": 3,
+      "payload": {
+        "characters": 3,
+        "scenes": 12
+      },
+      "result": {
+        "initialized": true,
+        "characters": 3,
+        "scenes": 12
+      },
+      "provider": "local",
+      "model": "",
+      "cost": 0,
+      "createdAt": "2026-11-10T10:39:16.307Z",
+      "updatedAt": "2026-11-10T10:39:16.786Z",
+      "startedAt": "2026-11-10T10:39:16.778Z",
+      "finishedAt": "2026-11-10T10:39:16.786Z"
+    }
+  ]
+}

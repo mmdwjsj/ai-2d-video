@@ -1,0 +1,44 @@
+{
+  "name": "thai-daily-life-ai-video",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "泰国本地生活 AI 双语短视频制作工作台（Windows 本地运行）",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "vite --config apps/web/vite.config.ts",
+    "dev:server": "tsx watch apps/server/src/index.ts",
+    "build": "vite build --config apps/web/vite.config.ts",
+    "start": "tsx apps/server/src/index.ts",
+    "example": "node examples/quickstart.mjs",
+    "demo": "python scripts/demo_animation.py",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test packages/core/src/store.test.ts packages/core/src/storyboard.test.ts packages/core/src/script-tasks.test.ts packages/ai-providers/src/local.test.ts packages/video-renderer/src/timeline.test.ts packages/video-renderer/src/sceneArt.test.ts packages/video-renderer/src/exportWiring.test.ts"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}
