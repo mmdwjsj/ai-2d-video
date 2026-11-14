@@ -3,6 +3,9 @@ import { api, ApiError } from './api';
 import { downloadOutput, downloadProjectJson } from './download';
 import { languageNotice, showsTh, showsZh } from './language';
 import type { LanguageMode } from './language';
+import { applyLibraryImages, characterFromLibrary, makeCharacterId } from './characterLibrary';
+import type { CharacterLibraryPayload, LibraryCharacter } from './characterLibrary';
+import { emptyCharacter } from '@thai-video/core/types';
 import type {
   Character, ExportMode, ProjectBundle, ProjectMeta, Scene, Script,
   ScriptInputMode, Shot, Task,
@@ -87,6 +90,9 @@ type State = {
   renderTask: Task | null;
   renderResult: RenderResultInfo | null;
   renderError: string | null;
+  /** assets/characters/library 里的人物六视图，选人时一次带出 6 张。 */
+  library: LibraryCharacter[];
+  libraryError: string | null;
 
   setPage: (page: Page) => void;
   setWorkSection: (section: WorkSection) => void;
@@ -104,6 +110,12 @@ type State = {
   patchProject: (patch: { name?: string; description?: string; exportMode?: ExportMode }) => Promise<void>;
 
   updateCharacters: (characters: Character[]) => void;
+  loadCharacterLibrary: () => Promise<void>;
+  /** 不带 entry = 新建空白人物（六张图逐张上传）；带 entry = 从资源库一次带出六张。 */
+  addCharacter: (entry?: LibraryCharacter) => void;
+  removeCharacter: (id: string) => void;
+  /** 把资源库六视图套到已有人物上，只换图、不覆盖手改过的设定。 */
+  replaceCharacterImages: (id: string, entry: LibraryCharacter) => void;
   updateScenes: (scenes: Scene[]) => void;
   uploadReference: (characterId: string, slot: string, file: File) => Promise<void>;
   updateScript: (script: Script) => void;
@@ -205,6 +217,19 @@ export const useWorkbench = create<State>((set, get) => {
     set({ tasks: result.tasks });
   };
 
+  /** 资源库接口是新增的：旧服务端返回 404 时静默降级，不影响人物增删与本地上传。 */
+  const fetchLibrary = async (): Promise<void> => {
+    try {
+      const result = await api.get<CharacterLibraryPayload>('/api/character-library');
+      set({ library: result.characters ?? [], libraryError: null });
+    } catch {
+      set({
+        library: [],
+        libraryError: '资源库没读到：请重启服务端后刷新页面（增删人物与本地上传仍然可用）',
+      });
+    }
+  };
+
   /** 渲染进度轮询：网络抖动自动重试，偶发连接重置不会误报「渲染失败」。 */
   const pollRender = async (taskId: string): Promise<void> => {
     const deadline = Date.now() + 8 * 60 * 1000;
@@ -287,6 +312,8 @@ export const useWorkbench = create<State>((set, get) => {
     renderTask: null,
     renderResult: null,
     renderError: null,
+    library: [],
+    libraryError: null,
 
     setPage: (page) => { flushAll(); set({ page }); },
 
@@ -333,6 +360,7 @@ export const useWorkbench = create<State>((set, get) => {
         api.get<ConfigPayload>('/api/config'),
       ]);
       set({ projects: list.projects, config });
+      await fetchLibrary();
       // 成片目录清单是新增接口；旧进程还没重启时静默降级，导出页会给出提示。
       try {
         const out = await api.get<{ dir: string; files: OutputFile[] }>('/api/outputs');
@@ -353,7 +381,7 @@ export const useWorkbench = create<State>((set, get) => {
       await get().openProject(id);
       set({
         page: 'work',
-        notice: `项目已创建（${languageMode === 'zh' ? '中文' : languageMode === 'th' ? '泰语' : '双语'}）：3 个人物与 12 个场景已自动带入，往下填到第 3 段写剧本`,
+        notice: `项目已创建（${languageMode === 'zh' ? '中文' : languageMode === 'th' ? '泰语' : '双语'}）：默认带入 ${result.project.characters.length} 个人物与 ${result.project.scenes.length} 个场景，人物可在第 1 段自由增删`,
       });
     }),
 
@@ -425,6 +453,42 @@ export const useWorkbench = create<State>((set, get) => {
       const id = projectId();
       set(bundleWith({ characters }));
       scheduleSave('characters', `chars:${id}`, `/api/projects/${id}/characters`, () => ({ characters: get().bundle?.characters ?? [] }));
+    },
+
+    loadCharacterLibrary: () => fetchLibrary(),
+
+    addCharacter: (entry) => {
+      const current = get().bundle;
+      if (!current) return;
+      const character = entry ? characterFromLibrary(entry) : emptyCharacter(makeCharacterId());
+      get().updateCharacters([...current.characters, character]);
+      set({
+        notice: entry
+          ? `已从资源库加入「${character.name}」，六张参考图自动带出`
+          : '已新增空白人物：请逐张上传正面 / 侧面 / 背面 / 全身 / 半身 / 脸部',
+      });
+    },
+
+    removeCharacter: (id) => {
+      const current = get().bundle;
+      if (!current) return;
+      const target = current.characters.find((c) => c.id === id);
+      if (!target) return;
+      // 删掉人之后，别人 relations 里指向他的项会变成悬挂引用，一并清掉。
+      const characters = current.characters
+        .filter((c) => c.id !== id)
+        .map((c) => ({ ...c, relations: c.relations.filter((r) => r.characterId !== id) }));
+      get().updateCharacters(characters);
+      set({ notice: `已删除「${target.name}」，其他人物里指向他/她的人物关系也已清理` });
+    },
+
+    replaceCharacterImages: (id, entry) => {
+      const current = get().bundle;
+      if (!current) return;
+      get().updateCharacters(current.characters.map((c) =>
+        c.id === id ? applyLibraryImages(c, entry.images) : c,
+      ));
+      set({ notice: `已换成资源库「${entry.name}」的六张参考图，姓名与音色保持不变` });
     },
 
     updateScenes: (scenes) => {

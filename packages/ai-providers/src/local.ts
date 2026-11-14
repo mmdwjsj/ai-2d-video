@@ -4,8 +4,12 @@
  * 它不调用任何外部模型，也不假装会翻译：中文/泰语台词来自一组**成对的
  * 泰国日常口语句式**（不是逐字互译），输出里带 note 要求人工或阶段二模型
  * 校对。这样第一阶段无需密钥就能完整走通「主题 → 双语剧本 → 分镜」验收。
+ *
+ * 粘贴/导入模式一律按项目规范解析（见 @thai-video/core/scriptLines），
+ * 不判别「这是哪种剧本风格」——只有一套规则，用户能预期系统怎么读自己写的字。
  */
 import { showsTh, showsZh } from '@thai-video/core/types';
+import { NARRATION_SPEAKER, parseScriptLines } from '@thai-video/core/scriptLines';
 import type { Character, LanguageMode, Scene, Script, ScriptInputMode, ScriptLine } from '@thai-video/core/types';
 import type { GenerateScriptInput, ScriptDraft, ShotDraft, TextProvider } from './types.js';
 
@@ -25,20 +29,57 @@ const PAIRS: Pair[] = [
 
 const NOTE = '本地规则生成：泰语为泰国日常口语句式模板（非逐字翻译），正式生成前请人工校对；阶段二配置文本模型后可重写。';
 
-const splitSentences = (text: string): string[] =>
-  text.split(/[。！？!?\n]+/).map((s) => s.trim()).filter(Boolean).slice(0, 12);
+/**
+ * 按句末标点 / 换行切句，但引号内的标点不算句子结束。
+ *
+ * 规范台词是「妮娜微笑地说：“今天还有冬阴功吗？”」——引号里的问号属于台词，
+ * 用正则一刀切会把整句劈成两段、还多出一个孤立的「”」镜头。
+ * 手写剧本正文（没有对白行时）仍走这里做兜底切分。
+ */
+const splitSentences = (text: string): string[] => {
+  const out: string[] = [];
+  let buf = '';
+  let quoteDepth = 0;
+  for (const ch of text) {
+    if (ch === '“' || ch === '「' || ch === '『') quoteDepth += 1;
+    else if ((ch === '”' || ch === '」' || ch === '』') && quoteDepth > 0) quoteDepth -= 1;
+    if (quoteDepth === 0 && /[。！？!?\n]/.test(ch)) {
+      if (buf.trim()) out.push(buf.trim());
+      buf = '';
+      continue;
+    }
+    buf += ch;
+  }
+  if (buf.trim()) out.push(buf.trim());
+  return out.slice(0, 12);
+};
 
 /**
- * 按关键词给一句话挑场景。
+ * 场景的「可匹配词表」= 用户填的关键词 + 场景名切出来的词。
  *
- * 只有「真的命中关键词」才算匹配，返回 null 交给上层兜底——这样不会因为所有分数都是 0
+ * 场景名也参与匹配，是为了「改了名字却忘了同步关键词」时仍能命中（例如把
+ * 「曼谷公寓」改成「家里 · 客厅」）。只取 name，不取 location：像「街角 24 小时
+ * 便利店」会切出「小时」这类泛词，反而把不相干的台词吸过去。
+ */
+const sceneWords = (scene: Scene): string[] => {
+  const fromName = (scene.name ?? '')
+    .split(/[\s·・/、，,（）()｜|\-]+/)
+    .map((w) => w.trim())
+    .filter((w) => w.length >= 2 && !/^\d+$/.test(w));
+  return [...new Set([...(scene.keywords ?? []).filter(Boolean), ...fromName])];
+};
+
+/**
+ * 按可匹配词表给一句话挑场景。
+ *
+ * 只有「真的命中」才算匹配，返回 null 交给上层兜底——这样不会因为所有分数都是 0
  * 就把每个镜头都塞进 scenes[0]（以前所有镜头堆在街边餐馆的直接原因）。
  */
 const matchScene = (text: string, scenes: Scene[]): Scene | null => {
   let best: Scene | null = null;
   let bestScore = 0;
   for (const scene of scenes) {
-    const score = (scene.keywords ?? []).reduce((sum, key) => sum + (key && text.includes(key) ? 1 : 0), 0);
+    const score = sceneWords(scene).reduce((sum, key) => sum + (text.includes(key) ? 1 : 0), 0);
     if (score > bestScore) { best = scene; bestScore = score; }
   }
   return best;
@@ -85,57 +126,99 @@ export class LocalRuleProvider implements TextProvider {
     const language: LanguageMode = input.languageMode ?? 'bilingual';
     const wantZh = showsZh(language);
     const wantTh = showsTh(language);
-    const zhInput = wantZh ? splitSentences(input.textZh ?? '') : [];
-    const thInput = wantTh ? splitSentences(input.textTh ?? '') : [];
-    const count = Math.max(3, Math.min(6, zhInput.length || thInput.length || 5));
-    const pairs = pickPairs(topic, count);
-    const cast = input.characters.slice(0, 3).map((c, i) => ({
-      characterId: c.id,
-      role: i === 0 ? '主视角' : i === 1 ? '对话搭档' : '社区熟人',
-    }));
+    const useInput = mode !== 'topic';
 
-    const lines: ScriptLine[] = pairs.map((pair, i) => {
-      const useInput = (mode === 'zh' || mode === 'th' || mode === 'import');
-      const zh = !wantZh ? '' : useInput && zhInput.length
-        ? zhInput[i % zhInput.length] : pair.zh;
-      const th = !wantTh ? '' : useInput && thInput.length
-        ? thInput[i % thInput.length] : pair.th;
-      const scene = pickScene(`${zh} ${th}`, topic, input.scenes, i);
+    const zhText = (input.textZh ?? '').trim();
+    const thText = (input.textTh ?? '').trim();
+    const parsedZh = wantZh && useInput && zhText ? parseScriptLines(zhText, input.characters) : null;
+    const parsedTh = wantTh && useInput && thText ? parseScriptLines(thText, input.characters) : null;
+    const fromTemplate = !parsedZh && !parsedTh;
+    const zhRows = parsedZh?.lines ?? [];
+    const thRows = (parsedTh?.lines ?? []).map((l) => ({ ...l, textTh: l.textZh, textZh: '' }));
+    const count = fromTemplate ? 5 : Math.min(12, Math.max(zhRows.length, thRows.length));
+    const pairs = pickPairs(topic, count);
+
+    const lines: ScriptLine[] = Array.from({ length: count }, (_, i) => {
+      if (fromTemplate) {
+        const pair = pairs[i];
+        const scene = pickScene(`${pair.zh} ${pair.th}`, topic, input.scenes, i);
+        const castId = input.characters[i % Math.max(1, input.characters.length)]?.id ?? '';
+        return {
+          id: `line-${i + 1}`,
+          speakerId: castId,
+          textZh: wantZh ? pair.zh : '',
+          textTh: wantTh ? pair.th : '',
+          emotion: pair.emotion,
+          action: pair.action,
+          sceneSuggestion: scene?.name ?? '',
+        };
+      }
+      const a = zhRows[i];
+      const b = thRows[i];
+      const base = a ?? b!;
       return {
+        ...base,
         id: `line-${i + 1}`,
-        speakerId: cast.length ? cast[i % cast.length].characterId : '',
-        textZh: zh,
-        textTh: th,
-        emotion: pair.emotion,
-        action: pair.action,
-        sceneSuggestion: scene?.name ?? '',
+        // 双语项目只粘了一侧时，另一侧仍用内置口语句式补齐（沿用既有能力，明确不是翻译）。
+        textZh: a?.textZh ?? (wantZh && !parsedZh ? pairs[i]?.zh ?? '' : ''),
+        textTh: b?.textTh ?? (wantTh && !parsedTh ? pairs[i]?.th ?? '' : ''),
+        speakerId: a?.speakerId || b?.speakerId || '',
+        emotion: a?.emotion ?? b?.emotion ?? '',
+        action: a?.action ?? b?.action ?? '',
+        sceneSuggestion: a?.sceneSuggestion || b?.sceneSuggestion || '',
+        // 只记中文正文行号：前端改对白行时按它写回，泰语栏行号不一定对应。
+        sourceIndex: a?.sourceIndex,
       };
     });
 
-    const zh = wantZh ? lines.map((l) => l.textZh).filter(Boolean).join('\n') : '';
-    const th = wantTh ? lines.map((l) => l.textTh).filter(Boolean).join('\n') : '';
+    const castIds = fromTemplate
+      ? input.characters.slice(0, 3).map((c) => c.id)
+      : [...new Set(lines.map((l) => l.speakerId).filter((id) => id && id !== NARRATION_SPEAKER))];
+    const cast = castIds.map((characterId, i) => ({
+      characterId,
+      role: i === 0 ? '主视角' : i === 1 ? '对话搭档' : '出场人物',
+    }));
+
+    // 粘贴模式保留用户写的规范原文（含【场景】行和「人物名＋描述＋说」前缀）；
+    // 主题模式才用内置句式拼正文。对白行是正文的结构化视图，不再覆盖掉原文。
+    const zh = wantZh
+      ? (parsedZh ? zhText : lines.map((l) => l.textZh).filter(Boolean).join('\n'))
+      : '';
+    const th = wantTh
+      ? (parsedTh ? thText : lines.map((l) => l.textTh).filter(Boolean).join('\n'))
+      : '';
     const durationEstimateSec = lines.reduce(
       (sum, l) => sum + estimateDuration(l.textZh, l.textTh), 0,
     );
-    const suggested = [...new Set(lines.map((l) => l.sceneSuggestion).filter(Boolean))];
+    const suggested = [...new Set([
+      parsedZh?.sceneName ?? '', parsedTh?.sceneName ?? '',
+      ...lines.map((l) => l.sceneSuggestion),
+    ].filter(Boolean))];
     return {
       title: `${topic}｜泰国日常`,
-      structure: '开场吸引点 → 三人日常对话（起因 / 小插曲 / 收尾）→ 一句生活感受旁白',
-      hook: `在曼谷，${topic}这样的小事，也能变成一天里最放松的时刻。`,
+      structure: fromTemplate
+        ? '开场吸引点 → 三人日常对话（起因 / 小插曲 / 收尾）→ 一句生活感受旁白'
+        : '按规范剧本逐行解析：场景提示 → 对白 / 旁白逐行切镜',
+      hook: fromTemplate ? `在曼谷，${topic}这样的小事，也能变成一天里最放松的时刻。` : scriptHook(lines),
       cast,
       lines,
       zh,
       th,
-      narrationZh: wantZh ? '泰国的日常，就藏在这些不起眼的小瞬间里。' : '',
-      narrationTh: wantTh ? 'ชีวิตประจำวันของไทยอยู่ในช่วงเวลาเล็ก ๆ แบบนี้เอง' : '',
-      emotion: '轻松、温暖、带一点轻喜剧',
-      actionSuggestion: '以对话和小动作为主；复杂动作（走路/骑摩托/跳舞）留给阶段二 AI 视频镜头',
+      // 旁白已经是对白行了，不再额外塞一条模板旁白到第一个镜头，避免重复。
+      narrationZh: fromTemplate && wantZh ? '泰国的日常，就藏在这些不起眼的小瞬间里。' : '',
+      narrationTh: fromTemplate && wantTh ? 'ชีวิตประจำวันของไทยอยู่ในช่วงเวลาเล็ก ๆ แบบนี้เอง' : '',
+      emotion: fromTemplate
+        ? '轻松、温暖、带一点轻喜剧'
+        : [...new Set(lines.map((l) => l.emotion).filter(Boolean))].join('、') || '自然',
+      actionSuggestion: fromTemplate
+        ? '以对话和小动作为主；复杂动作（走路/骑摩托/跳舞）留给阶段二 AI 视频镜头'
+        : '情绪与动作已从剧本描述自动匹配，可在下方对白行逐行下拉选择或自行填写。',
       sceneSuggestions: suggested.length ? suggested : input.scenes.slice(0, 2).map((s) => s.name),
       shotCountEstimate: lines.length,
       durationEstimateSec: Math.round(durationEstimateSec * 10) / 10,
-      note: language === 'bilingual'
-        ? NOTE
-        : `本地规则生成：项目语言类型为「${language === 'zh' ? '中文' : '泰语'}」，只生成该语种台词，另一语种留空；泰语口语句式需人工校对。`,
+      note: fromTemplate
+        ? (language === 'bilingual' ? NOTE : `本地规则生成：项目语言类型为「${language === 'zh' ? '中文' : '泰语'}」，只生成该语种台词，另一语种留空；泰语口语句式需人工校对。`)
+        : '已按项目规范拆成对白行：说话人、台词、情绪、动作都可在下方逐行修改；认不出的人名请手动选择。',
     };
   }
 
@@ -157,13 +240,17 @@ export class LocalRuleProvider implements TextProvider {
 
     return lines.map((line, i) => {
       const scene = pickScene(`${line.textZh} ${line.textTh} ${line.sceneSuggestion}`, script.topic, scenes, i);
-      const speaker = line.speakerId || characters[i % Math.max(1, characters.length)]?.id || '';
+      // 旁白行不指向具体人物：画面是场景空镜 + 旁白字幕，名字牌由渲染层显示「旁白」。
+      const isNarration = line.speakerId === NARRATION_SPEAKER;
+      const speaker = isNarration ? '' : (line.speakerId || characters[i % Math.max(1, characters.length)]?.id || '');
       const partner = characters[(i + 1) % Math.max(1, characters.length)]?.id;
-      const characterIds = i % 3 === 2 && partner && partner !== speaker ? [speaker, partner] : [speaker];
+      const characterIds = isNarration
+        ? []
+        : [speaker, ...(i % 3 === 2 && partner && partner !== speaker ? [partner] : [])].filter(Boolean);
       return {
         sceneId: scene?.id ?? '',
-        characterIds: characterIds.filter(Boolean),
-        action: line.action || '自然对话',
+        characterIds,
+        action: isNarration ? '' : (line.action || '自然对话'),
         expression: line.emotion || '自然',
         shotSize: sizes[i % sizes.length],
         cameraAngle: angles[i % angles.length],
@@ -179,3 +266,7 @@ export class LocalRuleProvider implements TextProvider {
     });
   }
 }
+
+/** 粘贴模式下用第一句台词做开场提示，不再凭主题编一句跟剧情无关的话。 */
+const scriptHook = (lines: ScriptLine[]): string =>
+  lines.find((l) => l.textZh || l.textTh)?.textZh || lines.find((l) => l.textTh)?.textTh || '';

@@ -327,7 +327,7 @@ export const buildSceneThumb = (scene?: Scene | null): string =>
   );
 
 /* -------------------------------------------------------------------------- */
-/* 人物立绘：三个固定角色，外貌随角色 ID 固定，表情随镜头变化                  */
+/* 人物立绘：外貌按角色 ID 固定，未知/新增角色按 ID 哈希回退到已有配色，表情随镜头变化 */
 /* -------------------------------------------------------------------------- */
 
 type Look = {
@@ -358,28 +358,59 @@ const hash = (text: string): number => {
   return h;
 };
 
-const expressionOf = (text: string): 'smile' | 'laugh' | 'surprised' | 'calm' => {
-  if (/大笑|开心|笑|happy|laugh/i.test(text)) return 'laugh';
-  if (/微笑|微笑地|smile/i.test(text)) return 'smile';
-  if (/惊讶|吃惊|好奇|疑问|surpris|疑问/i.test(text)) return 'surprised';
+type ExpressionKind = 'smile' | 'laugh' | 'surprised' | 'calm' | 'frown' | 'worried' | 'smirk' | 'serious';
+
+/**
+ * 情绪词 → 眉眼/嘴型。词表与 @thai-video/core/scriptLines 的 EMOTION_OPTIONS 对齐：
+ * 下拉框里能选的词要真的画得出差别，否则用户选了等于没选。
+ * 顺序要紧：「冷笑」「微笑」都含「笑」，必须先拦掉，不然会被宽泛的「笑」判成大笑。
+ */
+const expressionOf = (text: string): ExpressionKind => {
+  const t = text || '';
+  if (/冷笑|不屑|讥讽|得意|smirk/i.test(t)) return 'smirk';
+  if (/生气|愤怒|不满|皱眉|frown|angry/i.test(t)) return 'frown';
+  if (/慌张|紧张|害怕|worried|panic/i.test(t)) return 'worried';
+  if (/惊讶|吃惊|瞳孔地震|愣住|疑惑|好奇|疑问|surpris/i.test(t)) return 'surprised';
+  if (/大笑|开心|兴奋|笑|happy|laugh/i.test(t)) return 'laugh';
+  if (/微笑|温柔|感动|自信|smile/i.test(t)) return 'smile';
+  if (/认真|严肃|疲惫|失落|无奈|尴尬|平静/i.test(t)) return 'serious';
   return 'calm';
 };
 
-const mouth = (kind: ReturnType<typeof expressionOf>): string => {
+const mouth = (kind: ExpressionKind): string => {
   switch (kind) {
     case 'laugh': return '<path d="M96 176 Q120 208 144 176 Q120 196 96 176 Z" fill="#8d4050"/>';
     case 'smile': return '<path d="M100 178 Q120 194 140 178" stroke="#8d4050" stroke-width="5" fill="none" stroke-linecap="round"/>';
     case 'surprised': return '<ellipse cx="120" cy="182" rx="13" ry="16" fill="#8d4050"/>';
+    case 'frown': return '<path d="M100 190 Q120 172 140 190" stroke="#8d4050" stroke-width="5" fill="none" stroke-linecap="round"/>';
+    case 'worried': return '<path d="M100 186 q10 -9 20 0 q10 9 20 0" stroke="#8d4050" stroke-width="4" fill="none" stroke-linecap="round"/>';
+    case 'smirk': return '<path d="M100 186 Q122 176 140 182" stroke="#8d4050" stroke-width="5" fill="none" stroke-linecap="round"/>';
+    case 'serious': return '<path d="M102 184 H138" stroke="#8d4050" stroke-width="4" fill="none" stroke-linecap="round"/>';
     default: return '<path d="M104 182 Q120 187 136 182" stroke="#8d4050" stroke-width="4" fill="none" stroke-linecap="round"/>';
+  }
+};
+
+/** 眉毛比嘴型更能读出情绪：挑眉、八字眉、皱眉、一高一低、平眉。 */
+const eyebrows = (kind: ExpressionKind): string => {
+  const s = 'stroke="#3a2a2a" stroke-width="4" fill="none"';
+  switch (kind) {
+    case 'surprised':
+      return `<path d="M84 132 q14 -12 28 -2" ${s}/><path d="M128 130 q14 -10 28 2" ${s}/>`;
+    case 'worried':
+      return `<path d="M84 130 q14 10 28 2" ${s}/><path d="M128 132 q14 -10 28 -2" ${s}/>`;
+    case 'frown':
+      return `<path d="M84 130 l28 8" ${s}/><path d="M156 130 l-28 8" ${s}/>`;
+    case 'smirk':
+      return `<path d="M84 130 q14 -9 28 0" ${s}/><path d="M128 136 q14 -5 28 0" ${s}/>`;
+    default:
+      return `<path d="M84 136 q14 -5 28 0" ${s}/><path d="M128 136 q14 -5 28 0" ${s}/>`;
   }
 };
 
 const characterSvg = (character: Character, expression: string, speaking: boolean): string => {
   const look = lookFor(character.id);
   const kind = expressionOf(expression);
-  const eyebrow = kind === 'surprised'
-    ? '<path d="M84 132 q14 -12 28 -2" stroke="#3a2a2a" stroke-width="4" fill="none"/><path d="M128 130 q14 -10 28 2" stroke="#3a2a2a" stroke-width="4" fill="none"/>'
-    : '<path d="M84 136 q14 -5 28 0" stroke="#3a2a2a" stroke-width="4" fill="none"/><path d="M128 136 q14 -5 28 0" stroke="#3a2a2a" stroke-width="4" fill="none"/>';
+  const eyebrow = eyebrows(kind);
   return `
 <svg viewBox="0 0 240 420" xmlns="http://www.w3.org/2000/svg" class="person-svg">
   <defs><linearGradient id="shirt-${esc(character.id)}" x1="0" y1="0" x2="0" y2="1">

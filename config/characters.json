@@ -8,21 +8,47 @@
     "personality": "开朗自然，爱聊日常小事",
     "background": "在曼谷工作三年，和丈夫阿顿、儿子吨吨住在公寓里，喜欢给家人做冬阴功汤",
     "referenceImages": {
-      "front": "/assets/characters/cutout/nina-cutout.png",
-      "side": "", "back": "",
-      "fullBody": "/assets/characters/cutout/nina-cutout.png",
-      "halfBody": "", "face": "",
-      "expressions": [], "actions": []
+      "front": "assets/characters/library/nina/front.png",
+      "side": "assets/characters/library/nina/side.png",
+      "back": "assets/characters/library/nina/back.png",
+      "fullBody": "assets/characters/library/nina/fullBody.png",
+      "halfBody": "assets/characters/library/nina/halfBody.png",
+      "face": "assets/characters/library/nina/face.png",
+      "expressions": [],
+      "actions": []
     },
-    "wardrobe": ["浅杏色短袖上衣 + 深蓝长裤", "白色系带帆布鞋"],
-    "accessories": ["米色帆布包"],
+    "wardrobe": [
+      "浅杏色短袖上衣 + 深蓝长裤",
+      "白色系带帆布鞋"
+    ],
+    "accessories": [
+      "米色帆布包"
+    ],
     "voices": {
-      "zh": { "engine": "edge-tts", "voice": "zh-CN-XiaoxiaoNeural", "speed": 1, "volume": 1, "emotion": "自然" },
-      "th": { "engine": "edge-tts", "voice": "th-TH-PremwadeeNeural", "speed": 1, "volume": 1, "emotion": "เป็นธรรมชาติ" }
+      "zh": {
+        "engine": "edge-tts",
+        "voice": "zh-CN-XiaoxiaoNeural",
+        "speed": 1,
+        "volume": 1,
+        "emotion": "自然"
+      },
+      "th": {
+        "engine": "edge-tts",
+        "voice": "th-TH-PremwadeeNeural",
+        "speed": 1,
+        "volume": 1,
+        "emotion": "เป็นธรรมชาติ"
+      }
     },
     "relations": [
-      { "characterId": "char-b", "label": "丈夫" },
-      { "characterId": "char-c", "label": "儿子" }
+      {
+        "characterId": "char-b",
+        "label": "丈夫"
+      },
+      {
+        "characterId": "char-c",
+        "label": "儿子"
+      }
     ],
     "identityLock": {
       "enabled": true,
@@ -39,21 +65,47 @@
     "personality": "幽默好奇，爱把生活琐事讲成段子",
     "background": "土生土长曼谷人，通勤靠 BTS，下班回家爱帮着收拾餐桌",
     "referenceImages": {
-      "front": "/assets/characters/cutout/aton-cutout.png",
-      "side": "", "back": "",
-      "fullBody": "/assets/characters/cutout/aton-cutout.png",
-      "halfBody": "", "face": "",
-      "expressions": [], "actions": []
+      "front": "assets/characters/library/aton/front.png",
+      "side": "assets/characters/library/aton/side.png",
+      "back": "assets/characters/library/aton/back.png",
+      "fullBody": "assets/characters/library/aton/fullBody.png",
+      "halfBody": "assets/characters/library/aton/halfBody.png",
+      "face": "assets/characters/library/aton/face.png",
+      "expressions": [],
+      "actions": []
     },
-    "wardrobe": ["浅蓝绿色短袖 polo 衫 + 卡其长裤", "深棕色休闲皮鞋"],
-    "accessories": ["棕色手表"],
+    "wardrobe": [
+      "浅蓝绿色短袖 polo 衫 + 卡其长裤",
+      "深棕色休闲皮鞋"
+    ],
+    "accessories": [
+      "棕色手表"
+    ],
     "voices": {
-      "zh": { "engine": "edge-tts", "voice": "zh-CN-YunxiNeural", "speed": 1, "volume": 1, "emotion": "轻快" },
-      "th": { "engine": "edge-tts", "voice": "th-TH-NiwatNeural", "speed": 1, "volume": 1, "emotion": "ร่าเริง" }
+      "zh": {
+        "engine": "edge-tts",
+        "voice": "zh-CN-YunxiNeural",
+        "speed": 1,
+        "volume": 1,
+        "emotion": "轻快"
+      },
+      "th": {
+        "engine": "edge-tts",
+        "voice": "th-TH-NiwatNeural",
+        "speed": 1,
+        "volume": 1,
+        "emotion": "ร่าเริง"
+      }
     },
     "relations": [
-      { "characterId": "char-a", "label": "妻子" },
-      { "characterId": "char-c", "label": "儿子" }
+      {
+        "characterId": "char-a",
+        "label": "妻子"
+      },
+      {
+        "characterId": "char-c",
+        "label": "儿子"
+      }
     ],
     "identityLock": {
       "enabled": true,
@@ -70,21 +122,45 @@
     "personality": "活泼好奇，听话又爱抢着帮忙",
     "background": "妮娜和阿顿的儿子，最爱妈妈做的冬阴功汤，吃饭前会乖乖去洗手",
     "referenceImages": {
-      "front": "/assets/characters/cutout/dundun-cutout.png",
-      "side": "", "back": "",
-      "fullBody": "/assets/characters/cutout/dundun-cutout.png",
-      "halfBody": "", "face": "",
-      "expressions": [], "actions": []
+      "front": "assets/characters/library/dundun/front.png",
+      "side": "assets/characters/library/dundun/side.png",
+      "back": "assets/characters/library/dundun/back.png",
+      "fullBody": "assets/characters/library/dundun/fullBody.png",
+      "halfBody": "assets/characters/library/dundun/halfBody.png",
+      "face": "assets/characters/library/dundun/face.png",
+      "expressions": [],
+      "actions": []
     },
-    "wardrobe": ["亮黄色短袖 T 恤 + 浅棕短裤", "白袜 + 米棕运动鞋"],
+    "wardrobe": [
+      "亮黄色短袖 T 恤 + 浅棕短裤",
+      "白袜 + 米棕运动鞋"
+    ],
     "accessories": [],
     "voices": {
-      "zh": { "engine": "edge-tts", "voice": "zh-CN-YunxiaNeural", "speed": 1.05, "volume": 1, "emotion": "童声" },
-      "th": { "engine": "edge-tts", "voice": "th-TH-PremwadeeNeural", "speed": 1.05, "volume": 1, "emotion": "เด็ก" }
+      "zh": {
+        "engine": "edge-tts",
+        "voice": "zh-CN-YunxiaNeural",
+        "speed": 1.05,
+        "volume": 1,
+        "emotion": "童声"
+      },
+      "th": {
+        "engine": "edge-tts",
+        "voice": "th-TH-PremwadeeNeural",
+        "speed": 1.05,
+        "volume": 1,
+        "emotion": "เด็ก"
+      }
     },
     "relations": [
-      { "characterId": "char-a", "label": "妈妈" },
-      { "characterId": "char-b", "label": "爸爸" }
+      {
+        "characterId": "char-a",
+        "label": "妈妈"
+      },
+      {
+        "characterId": "char-b",
+        "label": "爸爸"
+      }
     ],
     "identityLock": {
       "enabled": true,

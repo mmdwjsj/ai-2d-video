@@ -118,3 +118,13 @@ test('场景缩略图在没有场景时退回默认画面而不是报错', () =>
   const svg = buildSceneThumb(null);
   assert.ok(svg.includes('<svg'));
 });
+
+test('对白行下拉里的情绪词能画出不同眉眼/嘴型，选了不是没反应', () => {
+  const frameOf = (expression: string): string => shotFrame('zh', { shot: { ...shot, expression } });
+  const frames = ['自然', '开心', '皱眉', '慌张', '冷笑', '认真'].map(frameOf);
+  assert.equal(new Set(frames).size, 6, '六种情绪应是六张不同的画面');
+  // 「冷笑」含「笑」，不能被宽泛的「笑」判成大笑张嘴。
+  assert.ok(!frameOf('冷笑').includes('M96 176 Q120 208 144 176'));
+  assert.ok(frameOf('开心').includes('M96 176 Q120 208 144 176'));
+  assert.ok(frameOf('皱眉').includes('M84 130 l28 8'), '皱眉要有内压的眉头');
+});

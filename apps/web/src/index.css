@@ -30,6 +30,26 @@ input:focus, textarea:focus, select:focus {
 .btn-danger { @apply border border-red-200 bg-red-50 text-red-700 hover:bg-red-100; }
 .chip { @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium; }
 
+/* 吸顶条高度的默认值；实测值由 ResizeObserver 写成 inline style 覆盖（inline 优先级更高），
+   这样 React 重渲染不会把量出来的高度冲掉。 */
+.sticky-stack {
+  --stack-top-h: 76px;
+}
+
+/* 冻结段头：不透明底由组件给，这里补下沿投影，让用户看出「这行是悬浮的上下文」而非内容错位。 */
+.frozen-head {
+  box-shadow: 0 6px 14px -10px rgba(32, 48, 47, .55);
+}
+
+/* 键盘 Tab / 浏览器自动把输入框滚进视口时，也要让开「吸顶条 + 段头」这两层，
+   否则光标会停在冻结栏背后。52px ≈ 段头高度 + 余量，吸顶条部分取实测变量。 */
+.sticky-stack input,
+.sticky-stack textarea,
+.sticky-stack select,
+.sticky-stack [contenteditable="true"] {
+  scroll-margin-top: calc(var(--stack-top-h, 76px) + 52px);
+}
+
 /* 只有分镜那一段横向滚动：细一点的滚动条，别抢视觉。 */
 .scroll-thin::-webkit-scrollbar { height: 8px; }
 .scroll-thin::-webkit-scrollbar-thumb { background: #d8d2c6; border-radius: 8px; }

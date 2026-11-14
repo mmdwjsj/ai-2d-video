@@ -67,7 +67,7 @@ export const ProjectsPage: React.FC = () => {
           </button>
         </div>
         <Banner tone="info">
-          当前选择：<span className="font-semibold">{LANGUAGE_LABELS[languageMode]}</span> — {LANGUAGE_OPTIONS.find((o) => o.value === languageMode)?.desc}。新建后自动带入 3 个人物与 12 个场景，并直接进「制作」第 3 段。
+          当前选择：<span className="font-semibold">{LANGUAGE_LABELS[languageMode]}</span> — {LANGUAGE_OPTIONS.find((o) => o.value === languageMode)?.desc}。新建后默认带入 3 个人物与 12 个场景（人物可增删、可从资源库换人），并直接进「制作」第 3 段。
         </Banner>
       </Card>
 

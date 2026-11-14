@@ -113,6 +113,8 @@ export type ScriptLine = {
   emotion: string;
   action: string;
   sceneSuggestion: string;
+  /** 该行在剧本正文里的原始行号（0 基），供对白行编辑后写回正文；旧数据可缺省。 */
+  sourceIndex?: number;
 };
 
 export type Script = {

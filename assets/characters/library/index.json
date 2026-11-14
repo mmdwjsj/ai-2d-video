@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "note": "人物六视图资源库。images 里是相对项目根的 POSIX 路径；新增人物时把六张图放进 library/<slug>/ 并在这里追加一项即可。",
+  "slots": [
+    {
+      "key": "front",
+      "label": "正面"
+    },
+    {
+      "key": "side",
+      "label": "侧面"
+    },
+    {
+      "key": "back",
+      "label": "背面"
+    },
+    {
+      "key": "fullBody",
+      "label": "全身"
+    },
+    {
+      "key": "halfBody",
+      "label": "半身"
+    },
+    {
+      "key": "face",
+      "label": "脸部"
+    }
+  ],
+  "characters": [
+    {
+      "id": "lib-nina",
+      "slug": "nina",
+      "name": "妮娜",
+      "nameTh": "นีน่า",
+      "cover": "assets/characters/library/nina/fullBody.png",
+      "images": {
+        "front": "assets/characters/library/nina/front.png",
+        "side": "assets/characters/library/nina/side.png",
+        "back": "assets/characters/library/nina/back.png",
+        "fullBody": "assets/characters/library/nina/fullBody.png",
+        "halfBody": "assets/characters/library/nina/halfBody.png",
+        "face": "assets/characters/library/nina/face.png"
+      },
+      "template": {
+        "name": "妮娜",
+        "nameTh": "นีน่า",
+        "ageSetting": "28 岁",
+        "occupation": "曼谷上班族 / 妻子",
+        "personality": "开朗自然，爱聊日常小事",
+        "background": "在曼谷工作三年，和丈夫阿顿、儿子吨吨住在公寓里，喜欢给家人做冬阴功汤",
+        "wardrobe": [
+          "浅杏色短袖上衣 + 深蓝长裤",
+          "白色系带帆布鞋"
+        ],
+        "accessories": [
+          "米色帆布包"
+        ],
+        "voices": {
+          "zh": {
+            "engine": "edge-tts",
+            "voice": "zh-CN-XiaoxiaoNeural",
+            "speed": 1,
+            "volume": 1,
+            "emotion": "自然"
+          },
+          "th": {
+            "engine": "edge-tts",
+            "voice": "th-TH-PremwadeeNeural",
+            "speed": 1,
+            "volume": 1,
+            "emotion": "เป็นธรรมชาติ"
+          }
+        },
+        "identityLock": {
+          "enabled": true,
+          "coreAppearance": "齐肩黑发带齐刘海整块色块、圆脸、暖棕肤色、细眉、大圆白眼小黑瞳；浅杏色短袖上衣、深蓝长裤、米色帆布包、白色系带帆布鞋",
+          "notes": "资产定稿：assets/characters/nina.png 与 cutout/nina-cutout.png。轮廓、脸型、服装不可变；只有表情与口型可动"
+        }
+      }
+    },
+    {
+      "id": "lib-aton",
+      "slug": "aton",
+      "name": "阿顿",
+      "nameTh": "ต้น",
+      "cover": "assets/characters/library/aton/fullBody.png",
+      "images": {
+        "front": "assets/characters/library/aton/front.png",
+        "side": "assets/characters/library/aton/side.png",
+        "back": "assets/characters/library/aton/back.png",
+        "fullBody": "assets/characters/library/aton/fullBody.png",
+        "halfBody": "assets/characters/library/aton/halfBody.png",
+        "face": "assets/characters/library/aton/face.png"
+      },
+      "template": {
+        "name": "阿顿",
+        "nameTh": "ต้น",
+        "ageSetting": "30 岁",
+        "occupation": "曼谷职场人 / 丈夫",
+        "personality": "幽默好奇，爱把生活琐事讲成段子",
+        "background": "土生土长曼谷人，通勤靠 BTS，下班回家爱帮着收拾餐桌",
+        "wardrobe": [
+          "浅蓝绿色短袖 polo 衫 + 卡其长裤",
+          "深棕色休闲皮鞋"
+        ],
+        "accessories": [
+          "棕色手表"
+        ],
+        "voices": {
+          "zh": {
+            "engine": "edge-tts",
+            "voice": "zh-CN-YunxiNeural",
+            "speed": 1,
+            "volume": 1,
+            "emotion": "轻快"
+          },
+          "th": {
+            "engine": "edge-tts",
+            "voice": "th-TH-NiwatNeural",
+            "speed": 1,
+            "volume": 1,
+            "emotion": "ร่าเริง"
+          }
+        },
+        "identityLock": {
+          "enabled": true,
+          "coreAppearance": "短黑发整块色块、偏瘦、小麦肤色、浓眉、大圆白眼小黑瞳；浅蓝绿色短袖 polo 衫、卡其长裤、棕色手表、深棕色休闲皮鞋",
+          "notes": "资产定稿：assets/characters/aton.png 与 cutout/aton-cutout.png。轮廓、脸型、服装不可变；只有表情与口型可动"
+        }
+      }
+    },
+    {
+      "id": "lib-dundun",
+      "slug": "dundun",
+      "name": "吨吨",
+      "nameTh": "",
+      "cover": "assets/characters/library/dundun/fullBody.png",
+      "images": {
+        "front": "assets/characters/library/dundun/front.png",
+        "side": "assets/characters/library/dundun/side.png",
+        "back": "assets/characters/library/dundun/back.png",
+        "fullBody": "assets/characters/library/dundun/fullBody.png",
+        "halfBody": "assets/characters/library/dundun/halfBody.png",
+        "face": "assets/characters/library/dundun/face.png"
+      },
+      "template": {
+        "name": "吨吨",
+        "nameTh": "",
+        "ageSetting": "5 岁",
+        "occupation": "家里的孩子",
+        "personality": "活泼好奇，听话又爱抢着帮忙",
+        "background": "妮娜和阿顿的儿子，最爱妈妈做的冬阴功汤，吃饭前会乖乖去洗手",
+        "wardrobe": [
+          "亮黄色短袖 T 恤 + 浅棕短裤",
+          "白袜 + 米棕运动鞋"
+        ],
+        "accessories": [],
+        "voices": {
+          "zh": {
+            "engine": "edge-tts",
+            "voice": "zh-CN-YunxiaNeural",
+            "speed": 1.05,
+            "volume": 1,
+            "emotion": "童声"
+          },
+          "th": {
+            "engine": "edge-tts",
+            "voice": "th-TH-PremwadeeNeural",
+            "speed": 1.05,
+            "volume": 1,
+            "emotion": "เด็ก"
+          }
+        },
+        "identityLock": {
+          "enabled": true,
+          "coreAppearance": "大头小身约 1:2.5、短黑发整块色块、圆脸、暖棕肤色、细眉、大圆白眼小黑瞳；亮黄色短袖 T 恤、浅棕短裤、白袜、米棕运动鞋",
+          "notes": "资产定稿：assets/characters/dundun.png 与 cutout/dundun-cutout.png。泰文名待补，留空时泰语名字牌回退中文名"
+        }
+      }
+    }
+  ]
+}

@@ -18,6 +18,8 @@ export default defineConfig({
       // 只取场景插画这一段（纯字符串拼接，不碰 node:child_process），用来在界面上画缩略图。
       { find: '@thai-video/video-renderer/sceneArt', replacement: path.join(rendererSrc, 'sceneArt.ts') },
       { find: '@thai-video/core/types', replacement: path.join(coreSrc, 'types.ts') },
+      // 规范剧本解析器前后端共用；必须排在宽泛的 '@thai-video/core' 之前，否则会被拼成 index.ts/xxx。
+      { find: '@thai-video/core/scriptLines', replacement: path.join(coreSrc, 'scriptLines.ts') },
       { find: '@thai-video/core', replacement: path.join(coreSrc, 'index.ts') },
     ],
   },

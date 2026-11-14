@@ -153,7 +153,7 @@ export const ExportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false 
         )}
 
         <p className="mt-3 text-[11px] leading-5 text-stone-500">
-          本地渲染，不需要任何 AI 密钥：画面是程序化 2D 插画（场景配色 + 三个人物立绘），字幕来自你的分镜台词，
+          本地渲染，不需要任何 AI 密钥：画面是程序化 2D 插画（场景配色 + 人物立绘），字幕来自你的分镜台词，
           镜头带缓慢推近动效，音轨是本地合成的氛围音。镜头时长按配音实测值撑开，视频不会早于配音结束。
           想换成 AI 生成的画面或真人配音，见下方「以后还能换什么」。
         </p>

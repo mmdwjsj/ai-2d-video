@@ -120,6 +120,44 @@ export const createApp = () => {
     });
   });
 
+  /**
+   * 人物六视图资源库：清单本体是 assets/characters/library/index.json。
+   * 前端「从资源库选人」只认这里返回的路径；缺图或越界路径一律置空，
+   * 免得选完出现一堆裂图。往 library/ 里加人只要改 index.json，不用动代码。
+   */
+  const LIBRARY_SLOTS = ['front', 'side', 'back', 'fullBody', 'halfBody', 'face'] as const;
+  type RawLibraryEntry = {
+    id: string; slug: string; name: string; nameTh?: string;
+    cover?: string; images?: Record<string, unknown>; template?: Record<string, unknown>;
+  };
+  app.get('/api/character-library', (_req, res) => {
+    const file = path.join(P.root, 'assets', 'characters', 'library', 'index.json');
+    if (!fs.existsSync(file)) { res.json({ slots: [], characters: [] }); return; }
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8')) as {
+      slots?: { key: string; label: string }[];
+      characters?: RawLibraryEntry[];
+    };
+    const safeImage = (value: unknown): string => {
+      if (typeof value !== 'string') return '';
+      if (!/^assets\/characters\/library\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\.(png|jpe?g|webp)$/i.test(value)) return '';
+      return fs.existsSync(path.join(P.root, value)) ? value : '';
+    };
+    const characters = (raw.characters ?? []).map((entry) => {
+      const images: Record<string, string> = {};
+      for (const slot of LIBRARY_SLOTS) images[slot] = safeImage(entry.images?.[slot]);
+      return {
+        id: entry.id,
+        slug: entry.slug,
+        name: entry.name,
+        nameTh: entry.nameTh ?? '',
+        cover: safeImage(entry.cover) || images.fullBody || images.front,
+        images,
+        template: entry.template ?? {},
+      };
+    });
+    res.json({ slots: raw.slots ?? [], characters });
+  });
+
   /** 成片在哪看：返回 output 绝对路径与该目录下已有的文件清单。 */
   app.get('/api/outputs', (_req, res) => {
     res.json({ dir: P.outputDir(), files: listOutputs() });

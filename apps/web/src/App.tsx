@@ -211,7 +211,7 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto p-5">
+        <div ref={scrollRef} id="workbench-scroll" className="min-h-0 flex-1 overflow-auto p-5">
           <StepGuide page={page} />
           {renderPage()}
         </div>

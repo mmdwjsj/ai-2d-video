@@ -56,7 +56,7 @@ export const providerConfig = (): ProviderConfig =>
     tts: { active: 'unconfigured' },
   });
 
-/** 三个固定人物：职业与关系都只是可编辑的初始值，不是写死的设定。 */
+/** 新建项目默认带的人物（config/characters.json）；项目里可自由增删，不是写死的设定。 */
 export const defaultCharacters = (): Character[] => {
   const raw = readJson<Omit<Character, 'updatedAt'>[]>(P.config('characters.json'), []);
   return raw.map((item) => ({ ...item, updatedAt: nowIso() }));
