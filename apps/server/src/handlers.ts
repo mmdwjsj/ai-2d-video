@@ -1,6 +1,7 @@
 import { createProviders } from '@thai-video/ai-providers';
 import { createTtsProvider } from '@thai-video/tts-providers';
 import { emptyShot, makeId, nowIso } from '@thai-video/core';
+import { inheritManualSceneSelections } from '@thai-video/core/sceneMatch';
 import type { Workbench } from '@thai-video/core';
 import type { GenerateScriptInput, ScriptDraft, ShotDraft } from '@thai-video/ai-providers';
 import type { Script, Shot } from '@thai-video/core/types';
@@ -77,8 +78,12 @@ export const registerHandlers = (wb: Workbench) => {
     });
     if (!drafts.length) throw new Error('剧本没有可切分的台词，请先生成或填写剧本');
     progress(80);
-    const shots = wb.storyboard.replaceAll(task.projectId, draftToShots(drafts));
-    return { provider: providers.text.id, shotCount: shots.length };
+    // 批量重建会换掉所有 shotId，手动换过的场景不能跟着丢：按台词 / 序号对齐继承。
+    const previous = wb.storyboard.list(task.projectId);
+    const next = inheritManualSceneSelections(draftToShots(drafts), previous);
+    const shots = wb.storyboard.replaceAll(task.projectId, next);
+    const kept = shots.filter((s) => s.sceneSource === 'manual').length;
+    return { provider: providers.text.id, shotCount: shots.length, preservedManualScenes: kept };
   });
 
   wb.queue.register('shot.image', async ({ task, progress }) => {

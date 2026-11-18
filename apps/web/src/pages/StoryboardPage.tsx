@@ -2,9 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 import { useWorkbench } from '../store';
 import type { Shot, ShotVersion } from '@thai-video/core/types';
+import { shotSceneSuggestion } from '@thai-video/core/sceneMatch';
 import { LANGUAGE_LABELS, showsTh, showsZh } from '../language';
 import { sceneThumbUrl } from '../sceneThumb';
 import { Badge, Banner, Card, Empty, Field, InlineBar, SectionTitle, TextArea } from '../ui';
+import { FramePlayer } from '../FramePlayer';
+import { frameOf, usePreviewFrames } from '../previewFrames';
+import { ScenePicker } from '../ScenePicker';
+import { SceneMatchReview } from '../SceneMatchReview';
 
 const STATUS_TONE: Record<Shot['status'], 'gray' | 'green' | 'orange' | 'red' | 'blue'> = {
   draft: 'gray', queued: 'blue', generating: 'orange', ready: 'green', failed: 'red',
@@ -23,12 +28,17 @@ export const StoryboardPage: React.FC<{ embedded?: boolean }> = ({ embedded = fa
   const regenerateShot = useWorkbench((s) => s.regenerateShot);
   const busy = useWorkbench((s) => s.busy);
   const [versions, setVersions] = useState<ShotVersion[]>([]);
-  const [scenePicker, setScenePicker] = useState(false);
 
   const shot = shots.find((s) => s.id === selectedShotId) ?? shots[0] ?? null;
-  const scene = bundle.scenes.find((s) => s.id === shot?.sceneId);
-  const charactersInShot = bundle.characters.filter((c) => shot?.characterIds.includes(c.id));
+  const shotIndex = shots.findIndex((s) => s.id === shot?.id);
+  // 与自动分镜、审阅面板共用同一个纯函数，详情里显示的「自动建议」不会是另一套算法。
+  const detailSuggestion = shot
+    ? shotSceneSuggestion(shot, bundle.scenes, bundle.script.topic, Math.max(0, shotIndex))
+    : null;
   const mode = bundle.meta.exportMode;
+  // 画面与预览页、成片导出共用服务端 buildFrame 生成的同一套帧。
+  const preview = usePreviewFrames(bundle, mode);
+  const previewShot = frameOf(preview.payload, shot?.id);
   const wantZh = showsZh(mode);
   const wantTh = showsTh(mode);
   const both = wantZh && wantTh;
@@ -67,13 +77,13 @@ export const StoryboardPage: React.FC<{ embedded?: boolean }> = ({ embedded = fa
     <div>
       {embedded ? (
         <InlineBar
-          hint={`每个镜头独立改、独立存，改一个不影响别的镜头；当前语言类型「${LANGUAGE_LABELS[mode]}」，只显示对应语种。`}
+          hint={`每个镜头独立改、独立存；上方「场景匹配审阅」可看自动匹配依据并手动换场景，当前语言类型「${LANGUAGE_LABELS[mode]}」。`}
           right={<button className="btn btn-ghost py-1 text-xs" disabled={busy} onClick={() => void addShot()}>添加镜头</button>}
         />
       ) : (
         <SectionTitle
           title="分镜编辑"
-          hint={`核心数据对象。每个镜头独立改人物/场景/动作/表情/台词；当前语言类型「${LANGUAGE_LABELS[mode]}」，只显示对应语种。`}
+          hint={`核心数据对象。上方「场景匹配审阅」可看自动匹配依据并手动换场景；当前语言类型「${LANGUAGE_LABELS[mode]}」。`}
           right={
             <>
               <Badge tone="blue">{shots.length} 个镜头 · {totalSec.toFixed(1)}s</Badge>
@@ -82,6 +92,8 @@ export const StoryboardPage: React.FC<{ embedded?: boolean }> = ({ embedded = fa
           }
         />
       )}
+
+      <SceneMatchReview bundle={bundle} updateShot={updateShot} embedded={embedded} />
 
       {shots.length === 0 ? (
         <Empty title="还没有分镜" hint="回第 3 段写完剧本，点顶部「提交并自动分镜」；也可以点上面「添加镜头」手动建一个。" />
@@ -105,7 +117,15 @@ export const StoryboardPage: React.FC<{ embedded?: boolean }> = ({ embedded = fa
                       <Badge tone={STATUS_TONE[item.status]}>{item.status}</Badge>
                     </div>
                   </div>
-                  <p className="mt-1 truncate text-xs text-stone-600">{itemScene?.name || '未选场景'}</p>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    {itemScene
+                      ? <img src={sceneThumbUrl(itemScene)} alt="" className="h-7 w-4 shrink-0 rounded-sm object-cover" />
+                      : <span className="h-7 w-4 shrink-0 rounded-sm bg-stone-200" />}
+                    <span className="min-w-0 truncate text-xs text-stone-600">{itemScene?.name || '未选场景'}</span>
+                    {item.sceneSource === 'manual' && (
+                      <span className="chip shrink-0 bg-emerald-50 text-[10px] text-emerald-700">手动</span>
+                    )}
+                  </div>
                   <p className="truncate text-[11px] text-stone-400">{lineOf(item) || '（无台词）'}</p>
                   <div className="mt-2 flex gap-1" onClick={(e) => e.stopPropagation()}>
                     <span className="chip bg-stone-100 text-stone-500">v{item.version}</span>
@@ -125,27 +145,15 @@ export const StoryboardPage: React.FC<{ embedded?: boolean }> = ({ embedded = fa
               )}
 
               <div className="flex flex-col gap-4 md:flex-row">
-                {/* 9:16 画面预览 */}
-                <div className="w-full shrink-0 md:w-48">
-                  <div className="relative aspect-[9/16] w-full overflow-hidden rounded-xl border border-stone-300 bg-gradient-to-b from-sky-100 to-orange-50">
-                    {(shot.generatedImagePath || shot.backgroundImagePath || scene) && (
-                      <img
-                        src={shot.generatedImagePath || shot.backgroundImagePath
-                          ? `/${shot.generatedImagePath || shot.backgroundImagePath}`
-                          : sceneThumbUrl(scene)}
-                        alt="镜头画面" className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3 text-white">
-                      <p className="text-xs font-semibold">{scene?.name || '未选场景'}</p>
-                      <p className="mt-0.5 text-[10px] opacity-90">{charactersInShot.map((c) => c.name).join(' / ') || '未选人物'}</p>
-                      <p className="mt-1 line-clamp-2 text-[10px]">{lineOf(shot)}</p>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-center text-[11px] text-stone-400">
-                    9:16 画面预览 · 阶段二接入真实素材
-                  </p>
-                </div>
+                {/* 9:16 画面：成片同款，按同一条口型时间轴动嘴 */}
+                <FramePlayer
+                  shot={previewShot}
+                  controls
+                  className="w-full shrink-0 md:w-48"
+                  hint={preview.loading
+                    ? '成片画面生成中…'
+                    : preview.error ? `预览画面加载失败：${preview.error}` : '暂无预览画面'}
+                />
 
                 <Card className="flex-1">
                   <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -155,34 +163,32 @@ export const StoryboardPage: React.FC<{ embedded?: boolean }> = ({ embedded = fa
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <div className="sm:col-span-2">
-                      <span className="label">场景</span>
-                      <button type="button" onClick={() => setScenePicker((v) => !v)}
-                        className="input flex items-center justify-between gap-2 text-left">
-                        <span className="flex min-w-0 items-center gap-2">
-                          {scene
-                            ? <img src={sceneThumbUrl(scene)} alt="" className="h-7 w-4 rounded-sm object-cover" />
-                            : <span className="h-7 w-4 rounded-sm bg-stone-200" />}
-                          <span className="truncate text-sm">{scene?.name || '未选场景'}</span>
-                        </span>
-                        <span className="shrink-0 text-[11px] text-stone-400">{scenePicker ? '收起' : '换场景 ▾'}</span>
-                      </button>
-                      {scenePicker && (
-                        <div className="mt-2 grid grid-cols-4 gap-1.5 rounded-lg border border-stone-200 bg-stone-50 p-2 sm:grid-cols-6">
-                          {bundle.scenes.map((item) => (
-                            <button key={item.id} type="button"
-                              onClick={() => { patch({ sceneId: item.id }); setScenePicker(false); }}
-                              className={`overflow-hidden rounded-md border-2 text-left transition ${
-                                item.id === shot.sceneId ? 'border-warm' : 'border-transparent hover:border-stone-300'}`}
-                              title={item.name}>
-                              <img src={sceneThumbUrl(item)} alt={item.name}
-                                className="aspect-[9/16] w-full object-cover" />
-                              <span className="block truncate bg-white px-1 py-0.5 text-[10px] leading-4 text-stone-600">
-                                {item.name || item.id}
-                              </span>
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="label">场景</span>
+                        <span className="flex items-center gap-2">
+                          <Badge tone={shot.sceneSource === 'manual' ? 'green' : 'gray'}>
+                            {shot.sceneSource === 'manual' ? '手动指定' : '自动匹配'}
+                          </Badge>
+                          {(shot.sceneSource === 'manual'
+                            || (detailSuggestion?.sceneId && detailSuggestion.sceneId !== shot.sceneId)) && (
+                            <button type="button" disabled={shot.locked}
+                              className="text-[11px] text-stone-500 hover:text-warm hover:underline disabled:opacity-50"
+                              onClick={() => patch({
+                                sceneId: detailSuggestion?.sceneId || shot.sceneId,
+                                sceneSource: 'auto',
+                              })}>
+                              恢复自动
                             </button>
-                          ))}
-                        </div>
-                      )}
+                          )}
+                        </span>
+                      </div>
+                      <ScenePicker
+                        scenes={bundle.scenes}
+                        value={shot.sceneId}
+                        suggestion={detailSuggestion}
+                        disabled={shot.locked}
+                        onSelect={(sceneId) => patch({ sceneId, sceneSource: 'manual' })}
+                      />
                     </div>
                     <Field label="镜头时长（秒）" type="number" step={0.1} min={0.5} max={60}
                       value={shot.durationSec} onChange={(v) => patch({ durationSec: Number(v) })} />

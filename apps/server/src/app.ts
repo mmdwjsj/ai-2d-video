@@ -4,8 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createWorkbench, P } from '@thai-video/core';
 import { renderEnvironment } from '@thai-video/video-renderer';
-import type { Character, Scene, Script, Shot } from '@thai-video/core/types';
+import type { Character, ExportMode, Scene, Script, Shot } from '@thai-video/core/types';
 import { registerHandlers } from './handlers.js';
+import { buildPreviewFrames } from './previewFrames.js';
 import * as V from './validation.js';
 
 export class HttpError extends Error {
@@ -261,6 +262,23 @@ export const createApp = () => {
   /* ---------------------------- 分镜 ---------------------------- */
   app.get('/api/projects/:id/shots', wrap((req, res) => {
     res.json({ shots: wb.storyboard.list(req.params.id) });
+  }));
+
+  /**
+   * 界面预览的画面（预览页 + 分镜页共用）：
+   * 服务端用成片同一个 buildFrame 生成四档口型 HTML 和逐帧时间轴，
+   * 前端只负责按时切换，不再自己画背景/人物/字幕，避免预览与成片两套画面。
+   * 图片用 /assets URL，不内联 base64，响应很小；不写盘、不启动浏览器。
+   */
+  app.get('/api/projects/:id/preview-frames', wrap((req, res) => {
+    const bundle = wb.projects.get(req.params.id);
+    const meta = wb.projects.meta(req.params.id);
+    const rawMode = typeof req.query.mode === 'string' ? req.query.mode : '';
+    const mode: ExportMode = (['zh', 'th', 'bilingual'].includes(rawMode)
+      ? rawMode : meta.exportMode) as ExportMode;
+    res.json(buildPreviewFrames({
+      bundle, mode, fps: wb.config.video.fps, projectTitle: meta.name,
+    }));
   }));
 
   app.post('/api/projects/:id/storyboard/split', wrap(async (req, res) => {

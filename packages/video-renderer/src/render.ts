@@ -13,6 +13,11 @@ import { buildAmbient, buildShotAudio, concatAudio, mixAudio } from './audio.js'
 export type RenderSegment = {
   id: string;
   framePng: string;
+  /**
+   * 逐帧口型画面序列（ffmpeg image2 pattern，如 .../f%05d.png）。
+   * 有值就替代「单张 PNG 循环」，帧数仍由 durationSec × fps 决定。
+   */
+  frameSequence?: string;
   durationSec: number;
   /** 该镜头的配音 WAV（已归一化）；null = 无配音 */
   voiceWav: string | null;
@@ -74,7 +79,12 @@ export const renderVideo = async (input: RenderInput): Promise<RenderResult> => 
   const { workDir, outputFile, segments, fps, width, height } = input;
   if (!segments.length) throw new Error('没有可渲染的镜头，请先「自动分镜」');
   for (const segment of segments) {
-    if (!fs.existsSync(segment.framePng)) throw new Error(`镜头画面缺失：${segment.framePng}`);
+    if (segment.frameSequence) {
+      const first = segment.frameSequence.replace(/%\d*d/, '00001');
+      if (!fs.existsSync(first)) throw new Error(`口型帧序列缺失：${first}`);
+    } else if (!fs.existsSync(segment.framePng)) {
+      throw new Error(`镜头画面缺失：${segment.framePng}`);
+    }
   }
   fs.mkdirSync(workDir, { recursive: true });
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
@@ -95,8 +105,12 @@ export const renderVideo = async (input: RenderInput): Promise<RenderResult> => 
     const audioPart = path.join(workDir, `audio-${String(i).padStart(2, '0')}.wav`);
     progress(8 + Math.round((i / segments.length) * 56), `合成第 ${i + 1}/${segments.length} 个镜头`);
 
+    // 有口型帧序列就逐帧播放；片头片尾 / 旁白镜头仍用单图循环，省掉多余截图。
+    const inputArgs = segment.frameSequence
+      ? ['-framerate', String(fps), '-i', segment.frameSequence]
+      : ['-loop', '1', '-framerate', String(fps), '-i', segment.framePng];
     await ffmpeg([
-      '-y', '-loop', '1', '-framerate', String(fps), '-i', segment.framePng,
+      '-y', ...inputArgs,
       '-vf', videoFilter(width, height, fps, segment.motion !== false),
       '-frames:v', String(frames),
       '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20',

@@ -49,6 +49,8 @@ export const syncScriptSchema = z.object({
 export const shotPatchSchema = z.object({
   durationSec: z.number().min(0.5).max(60).optional(),
   sceneId: z.string().max(120).optional(),
+  /** 手动选场景 / 恢复自动时由前端写入；sceneHint 是自动分镜产物，不允许前端改 */
+  sceneSource: z.enum(['auto', 'manual']).optional(),
   characterIds: z.array(z.string()).max(6).optional(),
   action: z.string().max(500).optional(),
   expression: z.string().max(120).optional(),

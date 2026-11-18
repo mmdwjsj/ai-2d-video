@@ -148,6 +148,10 @@ export type Shot = {
   order: number;
   durationSec: number;
   sceneId: string;
+  /** 'auto' = 自动匹配结果；'manual' = 用户手动指定，重新自动分镜时不会被覆盖 */
+  sceneSource: 'auto' | 'manual';
+  /** 剧本行里用户写的场景提示，自动匹配时权重最高，也用于审阅面板展示依据 */
+  sceneHint: string;
   characterIds: string[];
   action: string;
   expression: string;
@@ -284,6 +288,8 @@ export const emptyShot = (order: number, id: string): Shot => ({
   order,
   durationSec: 4,
   sceneId: '',
+  sceneSource: 'auto',
+  sceneHint: '',
   characterIds: [],
   action: '',
   expression: '自然',

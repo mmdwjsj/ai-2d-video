@@ -128,3 +128,74 @@ test('对白行下拉里的情绪词能画出不同眉眼/嘴型，选了不是�
   assert.ok(frameOf('开心').includes('M96 176 Q120 208 144 176'));
   assert.ok(frameOf('皱眉').includes('M84 130 l28 8'), '皱眉要有内压的眉头');
 });
+
+const art = {
+  src: 'data:image/png;base64,AAAA',
+  width: 1024, height: 1536,
+  mouthX: 504, mouthY: 387, mouthW: 59, mouthH: 12,
+  skin: 'rgb(208,157,114)',
+};
+
+test('四档口型画出四张不同画面，且与人物参考图共存', () => {
+  const frames = (['closed', 'small', 'open', 'wide'] as const).map((mouthShape) =>
+    shotFrame('zh', { characterArt: { 'char-a': art }, mouthShape }));
+  assert.equal(new Set(frames).size, 4, 'closed/small/open/wide 必须是四种不同画面');
+  for (const html of frames) {
+    assert.ok(html.includes('class="person-photo"'), '用户上传的参考图仍然贴着，没有被改回 SVG 小人');
+    assert.ok(html.includes('class="photo-blend"'), '肤色补丁与人物图同组 multiply，脸上不留亮斑');
+    assert.ok(html.includes('class="mouth-overlay"'), '四档都要先盖掉原图的静态嘴');
+    assert.ok(html.includes('mouthPatch-char-a'), '肤色补丁存在');
+    assert.ok(html.includes('preserveAspectRatio="xMidYMax meet"'),
+      '口型层与 object-fit:contain / object-position:center bottom 共用同一套映射，嘴不会贴歪');
+  }
+  assert.ok(frames[0].includes('<path'), '闭嘴档是一条闭合弧线，不是原图张着的嘴');
+  assert.ok(!frames[0].includes('#ce7078'));
+  for (const html of frames.slice(1)) {
+    assert.ok(html.includes('<rect'), '张嘴档是胶囊形不透明嘴');
+  }
+  assert.ok(frames[3].includes('#ce7078'), '大张嘴露出舌头');
+});
+
+test('吨吨这种「原图就张着大嘴」的角色，补丁必须完全盖住原嘴', () => {
+  // assets/characters/calibration.json 里吨吨的实测值：116×59 的黑色口腔。
+  const dundun = {
+    src: 'data:image/png;base64,AAAA',
+    width: 1024, height: 1536,
+    mouthX: 0.52445 * 1024, mouthY: 0.4756 * 1536,
+    mouthW: 116, mouthH: 59, skin: 'rgb(197,140,93)',
+  };
+  const closed = shotFrame('zh', { characterArt: { 'char-a': dundun }, mouthShape: 'closed' });
+  const small = shotFrame('zh', { characterArt: { 'char-a': dundun }, mouthShape: 'small' });
+  // 补丁高度必须大于原嘴高度，否则小口型会在上下露出原嘴的黑色边。
+  const patch = /height="([\d.]+)"\s+rx="[\d.]+"\s+fill="rgb\(197,140,93\)" filter=/.exec(closed);
+  assert.ok(patch, '闭嘴档也要有肤色补丁（原图嘴是张开的，不能留着）');
+  assert.ok(Number(patch[1]) > 59, `补丁高 ${patch?.[1]} 必须盖住 59px 的原嘴`);
+  assert.ok(closed.includes('<path'), '闭嘴档画出闭合弧线，吨吨不再是永远咧着嘴');
+  assert.ok(closed.includes('id="mouthPatch-char-a"'), '补丁的 filter id 按人物区分，多人同镜头不串');
+  assert.notEqual(closed, small, '吨吨闭嘴与小张嘴是两张不同画面');
+  assert.ok(small.includes('<rect'), '小口型有自己的胶囊嘴');
+});
+
+test('只有说话的人动嘴，同镜头的其他人保持原图', () => {
+  const aton = { ...emptyCharacter('char-b'), name: '阿顿' };
+  const html = shotFrame('zh', {
+    characters: [nina, aton], speakerId: 'char-b',
+    characterArt: { 'char-a': art, 'char-b': art }, mouthShape: 'open',
+  });
+  assert.equal((html.match(/class="mouth-overlay"/g) ?? []).length, 1);
+  assert.equal((html.match(/class="person-photo"/g) ?? []).length, 2);
+});
+
+test('没传口型时保持原来的情绪嘴型，静态调用不受影响', () => {
+  const html = shotFrame('zh', { characterArt: { 'char-a': art } });
+  assert.ok(!html.includes('class="mouth-overlay"'));
+  assert.ok(html.includes('class="person-photo"'));
+});
+
+test('没有参考图时，程序化 SVG 小人的嘴也跟着动', () => {
+  const closed = shotFrame('zh', { mouthShape: 'closed' });
+  const wide = shotFrame('zh', { mouthShape: 'wide' });
+  assert.notEqual(closed, wide, '闭嘴与张嘴必须是两张不同画面');
+  assert.ok(wide.includes('#ce7078'), '张嘴档画出舌头');
+  assert.ok(closed.includes('M84 136 q14 -5 28 0'), '情绪眉眼保留，不是把整张脸换掉');
+});

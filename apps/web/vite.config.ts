@@ -17,9 +17,13 @@ export default defineConfig({
     alias: [
       // 只取场景插画这一段（纯字符串拼接，不碰 node:child_process），用来在界面上画缩略图。
       { find: '@thai-video/video-renderer/sceneArt', replacement: path.join(rendererSrc, 'sceneArt.ts') },
+      // 口型档位/类型是纯计算，浏览器可用；mouth.ts 要读 WAV、铺帧序列，绝不能进 bundle。
+      { find: '@thai-video/video-renderer/mouthCore', replacement: path.join(rendererSrc, 'mouthCore.ts') },
       { find: '@thai-video/core/types', replacement: path.join(coreSrc, 'types.ts') },
       // 规范剧本解析器前后端共用；必须排在宽泛的 '@thai-video/core' 之前，否则会被拼成 index.ts/xxx。
       { find: '@thai-video/core/scriptLines', replacement: path.join(coreSrc, 'scriptLines.ts') },
+      // 场景匹配是纯计算，审阅面板与服务端自动分镜共用；同样要走子路径，别把 core 入口的 node:sqlite 打进来。
+      { find: '@thai-video/core/sceneMatch', replacement: path.join(coreSrc, 'sceneMatch.ts') },
       { find: '@thai-video/core', replacement: path.join(coreSrc, 'index.ts') },
     ],
   },

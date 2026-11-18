@@ -110,6 +110,14 @@ export const ExportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false 
             {bundle.shots.length ? `${bundle.shots.length} 个镜头 · 含片头片尾` : '还没有分镜，先回「制作」写完剧本并提交分镜'}
           </span>
         </div>
+        <p className="mt-2 text-[11px] leading-5 text-stone-500">
+          {renderResult?.ttsPreflight?.networkNote
+            ?? '配音由 edge-tts 调用微软在线语音服务合成，是本项目唯一联网点；剧本、画面、字幕、口型和 MP4 合成全在本机完成。'}
+          想完全离线就把 config/providers.json 的 tts.active 改成「unconfigured」（成片为字幕 + 本地氛围音）。
+          {renderResult?.ttsPreflight?.command && (
+            <> 本次自检选中的解释器：<span className="font-mono">{renderResult.ttsPreflight.command}</span>。</>
+          )}
+        </p>
 
         {rendering && renderTask && (
           <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50/60 p-3">
@@ -139,6 +147,22 @@ export const ExportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false 
               {' '}{renderResult.durationSec}s · {humanSize(renderResult.sizeBytes)} · {renderResult.shotCount} 个镜头
             </p>
             <p className="mt-1 text-[11px] leading-5 text-emerald-800">配音：{renderResult.voiceOverNote}</p>
+            {(renderResult.voiceFailures?.length ?? 0) > 0 && (
+              <div className="mt-1 text-[11px] leading-5 text-amber-700">
+                <p>
+                  有 {renderResult.voiceFailures?.length} 句配音合成失败，成片里这些镜头只有字幕与氛围音。
+                  {renderResult.voiceDiagnosis?.hint ?? '查看下方原始报错定位原因。'}
+                </p>
+                <details className="mt-1">
+                  <summary className="cursor-pointer">查看逐句原始报错（完整，不截断）</summary>
+                  <ul className="mt-1 space-y-1 whitespace-pre-wrap break-all text-[10px] leading-4 text-amber-900">
+                    {renderResult.voiceFailures?.map((f, i) => (
+                      <li key={`${f.shotId}-${i}`}>镜头 {f.shotId}「{f.text}」：{f.reason}</li>
+                    ))}
+                  </ul>
+                </details>
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap gap-2">
               <button className="btn btn-primary py-1 text-xs"
                 onClick={() => setPlaying({
@@ -154,7 +178,7 @@ export const ExportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false 
 
         <p className="mt-3 text-[11px] leading-5 text-stone-500">
           本地渲染，不需要任何 AI 密钥：画面是程序化 2D 插画（场景配色 + 人物立绘），字幕来自你的分镜台词，
-          镜头带缓慢推近动效，音轨是本地合成的氛围音。镜头时长按配音实测值撑开，视频不会早于配音结束。
+          镜头带缓慢推近动效，音轨是逐句合成的真人配音 + 低音量氛围音（配音不可用时只剩氛围音，结果里会写明原因）。镜头时长按配音实测值撑开，视频不会早于配音结束。
           想换成 AI 生成的画面或真人配音，见下方「以后还能换什么」。
         </p>
       </Card>

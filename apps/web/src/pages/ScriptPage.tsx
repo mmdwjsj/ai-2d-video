@@ -271,7 +271,7 @@ export const ScriptPage: React.FC<{ embedded?: boolean }> = ({ embedded = false 
           </p>
           {effectiveInputMode !== 'topic' && (
             <p>
-              粘贴模式：按规范一行一句（最多 12 行），自动拆出说话人、台词、情绪、动作；【场景】行只作场景提示，不占镜头；旁白行单独标出。
+              粘贴模式：按规范一行一句（最多 12 行），自动拆出说话人、台词、情绪、动作；【场景】行只作场景提示，不占镜头；「旁白：…」是交代当时情况和人物心情的情境说明，单独列一行、不设说话人。
               {both && '本地规则不翻译，另一语言栏仍是内置口语句式，中泰不会对上；双语项目建议用「导入已有剧本」两栏分别粘贴。'}
             </p>
           )}
@@ -350,47 +350,76 @@ export const ScriptPage: React.FC<{ embedded?: boolean }> = ({ embedded = false 
             <Banner tone="info">正文已经写好，但还没拆成对白行：点右上「重新解析正文」按规范生成，或点上方「③ {generateLabel}」。</Banner>
           ) : (
             <div className="space-y-2">
-              {script.lines.map((line, index) => (
-                <div key={line.id} className="rounded-lg border border-stone-200 p-2">
-                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-semibold text-stone-400">#{index + 1}</span>
-                    {line.speakerId === NARRATION_SPEAKER && <Badge tone="gray">旁白</Badge>}
-                    {line.sceneSuggestion && <span className="text-[11px] text-stone-400">场景：{line.sceneSuggestion}</span>}
-                  </div>
-                  <div className="flex flex-wrap items-start gap-2">
-                    <div className="w-[120px] shrink-0">
-                      <Select label="说话人" value={line.speakerId}
-                        onChange={(v) => updateLine(index, { speakerId: v })}
-                        options={[
-                          ...bundle.characters.map((c) => ({ value: c.id, label: c.name })),
-                          { value: NARRATION_SPEAKER, label: '旁白' },
-                        ]} />
+              {script.lines.map((line, index) => {
+                // 旁白是「交代当时情况 / 人物心情」的情境说明，不是某个角色在说话：
+                // 它不进说话人下拉，也没有情绪动作，只保留可编辑的描述内容。
+                const isNarration = line.speakerId === NARRATION_SPEAKER;
+                return (
+                  <div key={line.id} className={`rounded-lg border border-stone-200 p-2 ${isNarration ? 'bg-stone-50' : ''}`}>
+                    <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-semibold text-stone-400">#{index + 1}</span>
+                      {isNarration && <Badge tone="gray">情境 / 旁白</Badge>}
+                      {line.sceneSuggestion && <span className="text-[11px] text-stone-400">场景：{line.sceneSuggestion}</span>}
                     </div>
-                    {wantZh && (
-                      <div className="min-w-[180px] flex-1">
-                        <Field label="中文对白" value={line.textZh} onChange={(v) => updateLine(index, { textZh: v })} />
+                    {isNarration ? (
+                      <div className="flex flex-wrap items-start gap-2">
+                        <div className="w-[120px] shrink-0">
+                          <span className="label">行类型</span>
+                          <p className="mt-1 rounded border border-stone-200 bg-white px-2 py-2 text-[11px] text-stone-500">情境说明 · 无说话人</p>
+                        </div>
+                        {wantZh && (
+                          <div className="min-w-[180px] flex-1">
+                            <Field label="情境描述（当时情况 / 人物心情）" value={line.textZh}
+                              onChange={(v) => updateLine(index, { textZh: v })} />
+                          </div>
+                        )}
+                        {wantTh && (
+                          <div className="min-w-[180px] flex-1">
+                            <Field label="泰语情境描述" value={line.textTh}
+                              onChange={(v) => updateLine(index, { textTh: v })} />
+                          </div>
+                        )}
+                        <p className="w-full text-[10px] leading-4 text-stone-400">
+                          旁白不是人物说的话，只用来交代当时情况和人物心情；不设说话人、不设情绪动作，成片里作为画外音字幕显示。
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-start gap-2">
+                        <div className="w-[120px] shrink-0">
+                          <Select label="说话人" value={line.speakerId}
+                            onChange={(v) => updateLine(index, { speakerId: v })}
+                            options={[
+                              { value: '', label: '未指定' },
+                              ...bundle.characters.map((c) => ({ value: c.id, label: c.name })),
+                            ]} />
+                        </div>
+                        {wantZh && (
+                          <div className="min-w-[180px] flex-1">
+                            <Field label="中文对白" value={line.textZh} onChange={(v) => updateLine(index, { textZh: v })} />
+                          </div>
+                        )}
+                        {wantTh && (
+                          <div className="min-w-[180px] flex-1">
+                            <Field label="泰语对白" value={line.textTh} onChange={(v) => updateLine(index, { textTh: v })} />
+                          </div>
+                        )}
+                        <div className="w-[112px] shrink-0">
+                          <ComboBox label="情绪" value={line.emotion} options={EMOTION_OPTIONS} placeholder="选或自己填"
+                            onChange={(v) => updateLine(index, { emotion: v })} />
+                        </div>
+                        <div className="w-[112px] shrink-0">
+                          <ComboBox label="动作" value={line.action} options={ACTION_OPTIONS} placeholder="选或自己填"
+                            onChange={(v) => updateLine(index, { action: v })} />
+                        </div>
                       </div>
                     )}
-                    {wantTh && (
-                      <div className="min-w-[180px] flex-1">
-                        <Field label="泰语对白" value={line.textTh} onChange={(v) => updateLine(index, { textTh: v })} />
-                      </div>
-                    )}
-                    <div className="w-[112px] shrink-0">
-                      <ComboBox label="情绪" value={line.emotion} options={EMOTION_OPTIONS} placeholder="选或自己填"
-                        onChange={(v) => updateLine(index, { emotion: v })} />
-                    </div>
-                    <div className="w-[112px] shrink-0">
-                      <ComboBox label="动作" value={line.action} options={ACTION_OPTIONS} placeholder="选或自己填"
-                        onChange={(v) => updateLine(index, { action: v })} />
-                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           <p className="mt-3 text-[11px] leading-5 text-stone-500">
-            情绪、动作由剧本描述自动匹配：点输入框可拉出常用词，也能直接打字自己填。改任一行会同步写回上方中文剧本正文对应行；反过来改了正文，点右上「重新解析正文」更新这里。泰语正文保持独立编辑。确认无误后点页面顶部「提交并自动分镜」。
+            说话人只能从项目人物里选（或「未指定」）；「旁白：…」是交代当时情况与人物心情的情境说明，不是人物，不进说话人。情绪、动作由对白描述自动匹配，可下拉选也可自己填。改任一行会同步写回上方中文剧本正文对应行；反过来改了正文，点右上「重新解析正文」更新这里。泰语正文保持独立编辑。确认无误后点页面顶部「提交并自动分镜」——之前在第 4 段手动指定的场景会被保留，不会被重新覆盖。
           </p>
         </Card>
       )}

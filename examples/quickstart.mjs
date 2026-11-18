@@ -254,6 +254,8 @@ async function main() {
     say(`路径：output/${r.path}`);
     say(`规格：${r.width}×${r.height} · ${r.fps}fps · ${r.durationSec}s · ${Math.round(r.sizeBytes / 1024)} KB · ${r.codec}`);
     say(`配音：${r.voiceOverNote}`);
+    if (r.voiceDiagnosis?.hint) say(`处理建议：${r.voiceDiagnosis.hint}`);
+    if (r.ttsPreflight?.networkNote) say(`联网说明：${r.ttsPreflight.networkNote}`);
     say('界面「导出页面 → 成片文件在哪看」可直接播放 / 下载这份 MP4。');
   }
 

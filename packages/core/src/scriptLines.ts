@@ -12,7 +12,11 @@
  */
 import type { Character, ScriptLine } from '@thai-video/core/types';
 
-/** 旁白行的说话人哨兵：不是人物 id，splitShots 据此生成不指定人物的旁白镜头。 */
+/**
+ * 情境 / 旁白行的「类型」哨兵（复用 speakerId 字段存放，仅为不改动既有数据结构）。
+ * 旁白不是人物、不是说话人：splitShots 据此生成「无出场人物 + 画外音字幕」的情境镜头，
+ * 前端也不会把它列进说话人下拉，更不给它情绪/动作。
+ */
 export const NARRATION_SPEAKER = '__narration__';
 
 export const DEFAULT_EMOTION = '自然';

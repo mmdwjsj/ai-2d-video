@@ -10,6 +10,7 @@
  */
 import { showsTh, showsZh } from '@thai-video/core/types';
 import { NARRATION_SPEAKER, parseScriptLines } from '@thai-video/core/scriptLines';
+import { suggestScene } from '@thai-video/core/sceneMatch';
 import type { Character, LanguageMode, Scene, Script, ScriptInputMode, ScriptLine } from '@thai-video/core/types';
 import type { GenerateScriptInput, ScriptDraft, ShotDraft, TextProvider } from './types.js';
 
@@ -55,50 +56,9 @@ const splitSentences = (text: string): string[] => {
 };
 
 /**
- * 场景的「可匹配词表」= 用户填的关键词 + 场景名切出来的词。
- *
- * 场景名也参与匹配，是为了「改了名字却忘了同步关键词」时仍能命中（例如把
- * 「曼谷公寓」改成「家里 · 客厅」）。只取 name，不取 location：像「街角 24 小时
- * 便利店」会切出「小时」这类泛词，反而把不相干的台词吸过去。
+ * 场景匹配统一走 @thai-video/core/sceneMatch，与分镜页「场景匹配审阅」用的是
+ * 同一个纯函数：界面上显示的自动建议、命中词、置信度就是这里真正采用的结果。
  */
-const sceneWords = (scene: Scene): string[] => {
-  const fromName = (scene.name ?? '')
-    .split(/[\s·・/、，,（）()｜|\-]+/)
-    .map((w) => w.trim())
-    .filter((w) => w.length >= 2 && !/^\d+$/.test(w));
-  return [...new Set([...(scene.keywords ?? []).filter(Boolean), ...fromName])];
-};
-
-/**
- * 按可匹配词表给一句话挑场景。
- *
- * 只有「真的命中」才算匹配，返回 null 交给上层兜底——这样不会因为所有分数都是 0
- * 就把每个镜头都塞进 scenes[0]（以前所有镜头堆在街边餐馆的直接原因）。
- */
-const matchScene = (text: string, scenes: Scene[]): Scene | null => {
-  let best: Scene | null = null;
-  let bestScore = 0;
-  for (const scene of scenes) {
-    const score = sceneWords(scene).reduce((sum, key) => sum + (text.includes(key) ? 1 : 0), 0);
-    if (score > bestScore) { best = scene; bestScore = score; }
-  }
-  return best;
-};
-
-/** 完全没命中时的兜底：优先日常通用场景，并在其中按下标轮换，避免整片都是同一个地方。 */
-const fallbackScene = (scenes: Scene[], index: number): Scene | null => {
-  if (!scenes.length) return null;
-  const generic = scenes.filter((s) =>
-    /家|公寓|apartment|街|street|便利|convenience|咖啡|cafe/i.test(`${s.id} ${s.name} ${s.type} ${s.location}`));
-  const pool = generic.length ? generic : scenes;
-  return pool[index % pool.length];
-};
-
-/** 一句话定场景：先看这句台词/场景提示，再退到整篇主题，最后轮换兜底。 */
-const pickScene = (lineText: string, topic: string, scenes: Scene[], index: number): Scene | null =>
-  matchScene(lineText, scenes) ?? matchScene(topic, scenes) ?? fallbackScene(scenes, index);
-
-
 const estimateDuration = (zh: string, th: string): number => {
   const spoken = Math.max(zh.length / 4.2, th.length / 8);
   return Math.round(Math.min(12, Math.max(2.5, spoken + 1.2)) * 10) / 10;
@@ -141,7 +101,10 @@ export class LocalRuleProvider implements TextProvider {
     const lines: ScriptLine[] = Array.from({ length: count }, (_, i) => {
       if (fromTemplate) {
         const pair = pairs[i];
-        const scene = pickScene(`${pair.zh} ${pair.th}`, topic, input.scenes, i);
+        const suggestion = suggestScene({
+          text: `${pair.zh} ${pair.th}`, topic, scenes: input.scenes, index: i,
+        });
+        const sceneName = input.scenes.find((s) => s.id === suggestion.sceneId)?.name ?? '';
         const castId = input.characters[i % Math.max(1, input.characters.length)]?.id ?? '';
         return {
           id: `line-${i + 1}`,
@@ -150,7 +113,7 @@ export class LocalRuleProvider implements TextProvider {
           textTh: wantTh ? pair.th : '',
           emotion: pair.emotion,
           action: pair.action,
-          sceneSuggestion: scene?.name ?? '',
+          sceneSuggestion: sceneName,
         };
       }
       const a = zhRows[i];
@@ -239,8 +202,14 @@ export class LocalRuleProvider implements TextProvider {
     const angles = ['平视', '平视', '略俯', '平视', '低机位'];
 
     return lines.map((line, i) => {
-      const scene = pickScene(`${line.textZh} ${line.textTh} ${line.sceneSuggestion}`, script.topic, scenes, i);
-      // 旁白行不指向具体人物：画面是场景空镜 + 旁白字幕，名字牌由渲染层显示「旁白」。
+      const suggestion = suggestScene({
+        text: [line.textZh, line.textTh].filter(Boolean).join(' '),
+        hint: line.sceneSuggestion ?? '',
+        topic: script.topic,
+        scenes,
+        index: i,
+      });
+      // 情境/旁白行不是人物台词：画面是场景空镜 + 画外音字幕，不指向人物、也不署名说话人。
       const isNarration = line.speakerId === NARRATION_SPEAKER;
       const speaker = isNarration ? '' : (line.speakerId || characters[i % Math.max(1, characters.length)]?.id || '');
       const partner = characters[(i + 1) % Math.max(1, characters.length)]?.id;
@@ -248,7 +217,9 @@ export class LocalRuleProvider implements TextProvider {
         ? []
         : [speaker, ...(i % 3 === 2 && partner && partner !== speaker ? [partner] : [])].filter(Boolean);
       return {
-        sceneId: scene?.id ?? '',
+        sceneId: suggestion.sceneId,
+        sceneSource: 'auto' as const,
+        sceneHint: line.sceneSuggestion ?? '',
         characterIds,
         action: isNarration ? '' : (line.action || '自然对话'),
         expression: line.emotion || '自然',

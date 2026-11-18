@@ -39,6 +39,10 @@ export type GenerateScriptInput = {
 /** 自动分镜产物：core 会补上 id/order/status/version 等字段。 */
 export type ShotDraft = {
   sceneId: string;
+  /** 自动匹配来源；手动指定的场景由 core 在重建分镜时继承，不从草稿来 */
+  sceneSource?: 'auto' | 'manual';
+  /** 剧本行里的场景提示，留给审阅面板解释「为什么自动配了这个场景」 */
+  sceneHint?: string;
   characterIds: string[];
   action: string;
   expression: string;

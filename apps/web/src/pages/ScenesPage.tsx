@@ -42,13 +42,13 @@ export const ScenesPage: React.FC<{ embedded?: boolean }> = ({ embedded = false 
     <div>
       {embedded ? (
         <InlineBar
-          hint="一天里的光线已经写在场景里（夜市自带夜景、办公室自带白天），不用单独配。台词按关键词自动落到场景；分镜里想换某个镜头的场景，到第 4 段点缩略图换。"
+          hint="一天里的光线已经写在场景里（夜市自带夜景、办公室自带白天），不用单独配。关键词决定台词自动落到哪个场景；第 4 段「场景匹配审阅」能看到依据并逐镜头手动换，换过的不怕重新分镜。"
           right={<button className="btn btn-ghost py-1 text-xs" onClick={add}>添加场景</button>}
         />
       ) : (
         <SectionTitle
           title="场景库"
-          hint="缩略图就是成片里的画面配色。台词按关键词自动匹配场景，个别镜头可在分镜里单独换。"
+          hint="缩略图就是成片里的画面配色。自动匹配按关键词猜，不准的在第 4 段「场景匹配审阅」里能看到依据并手动换。"
           right={<><Badge tone="blue">{bundle.scenes.length} 个场景</Badge><button className="btn btn-primary" onClick={add}>添加场景</button></>}
         />
       )}
@@ -123,7 +123,7 @@ export const ScenesPage: React.FC<{ embedded?: boolean }> = ({ embedded = false 
             </div>
             <Field label="地点描述（会注入生成提示）" value={editing.location}
               onChange={(v) => update(editing.id, { location: v })} />
-            <Field label="匹配关键词（逗号分隔，决定台词自动分到哪）"
+            <Field label="匹配关键词（逗号分隔，决定台词自动分到哪；改完去第 4 段审阅面板看效果）"
               value={(editing.keywords ?? []).join('，')}
               placeholder="夜市，小吃，路边摊"
               onChange={(v) => update(editing.id, {
@@ -132,6 +132,7 @@ export const ScenesPage: React.FC<{ embedded?: boolean }> = ({ embedded = false 
             <p className="text-[11px] leading-relaxed text-stone-500">
               改完自动保存。时间、天气、光线、镜头角度不再单独配置：
               夜市场景天然是夜景、办公室天然是白天，靠场景本身表达，少填一堆不会生效的框。
+              自动匹配不可能百分百准：命中不了关键词的镜头会标成「程序兜底」，在分镜的「场景匹配审阅」里手动选一次即可，之后重新自动分镜也会保留。
             </p>
           </div>
         </Modal>

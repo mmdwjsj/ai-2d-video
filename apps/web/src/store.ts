@@ -59,6 +59,14 @@ export type RenderResultInfo = {
   codec: string;
   hasVoiceOver: boolean;
   voiceOverNote: string;
+  /** 配音合成失败的句子（可能是缺 Python 依赖，也可能是联网失败），界面要如实提示 */
+  voiceFailures?: { shotId: string; text: string; reason: string }[];
+  /** 失败分类与可操作建议：不再把所有失败都写成「联网恢复后重新导出」 */
+  voiceDiagnosis?: { kind: string; summary: string; hint: string; retryable: boolean };
+  /** 导出前的本机自检结果，界面据此解释为什么会联网、用的是哪个解释器 */
+  ttsPreflight?: {
+    ok: boolean; command: string; requiresNetwork: boolean; networkNote: string;
+  };
   renderedAt: string;
 };
 

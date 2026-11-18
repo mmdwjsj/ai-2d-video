@@ -42,7 +42,7 @@
 
 | 阶段 | 实现 | 说明 |
 | --- | --- | --- |
-| 挑台词 / 配音 | `apps/server/src/render.ts` | 按语言类型取对白；有 TTS 就合成，否则读镜头已有 WAV |
+| 挑台词 / 配音 | `apps/server/src/render.ts` | 按语言类型取对白；TTS 逐句合成（失败重试）→ 镜头已有 WAV → 上次导出的配音缓存 |
 | 时间轴 | `video-renderer/src/timeline.ts` | `computeTimeline`，只认 ffprobe 实测音频时长 |
 | 画面帧 | `video-renderer/src/sceneArt.ts` | 12 套场景配色 + 剪影/灯笼/货架等元素、3 个固定人物 SVG 立绘、字幕排版 |
 | 截图 | `video-renderer/src/frames.ts` | 系统 Edge/Chrome `--headless --screenshot`，精确 1080×1920 |
@@ -56,11 +56,15 @@
 
 | 情况 | 结果 |
 | --- | --- |
-| `tts.active = "command"`（当前默认） | 调用配置里的命令逐句合成，自动缓存、混入 |
+| `tts.active = "command"`（当前默认） | 调用配置里的命令逐句合成，自动缓存、混入；**这是本项目唯一联网点** |
+| `tts.active = "unconfigured"` | 完全离线：不发起任何配音请求，成片为字幕 + 本地氛围音 |
 | 镜头 `audioZhPath` / `audioThPath` 指向磁盘上存在的 WAV | 也可直接混入，并按实测时长撑开镜头 |
-| 离线 / 命令失败 / 设回 `unconfigured` | 该句退回字幕并告警，任务结果写「未配音」，绝不伪造人声 |
+| 导出成功后 | 每个镜头的整条配音留在 `assets/audio/tts/shot-<镜头>-<语种>.wav`：预览可直接试听，下次离线也能兜底 |
+| 离线 / 命令失败 / 设回 `unconfigured` | 单句重试一次；仍失败先回退镜头 WAV / 上次导出的配音缓存，都不行才退回字幕。任务结果写明失败原因与句数，绝不伪造人声 |
 
-本机先装一次 `python -m pip install edge-tts`（联网、无需 API 密钥）。`config/providers.json` 的 `tts` 已是完整 command 配置，角色级音色在 `config/characters.json` 的 `voices` 里。换引擎只需改 `command` / `args`，模板占位符：
+**为什么会联网**：edge-tts 不是本地声学模型，它把台词通过 WebSocket 发到微软在线语音服务，再把音频取回来；本机只负责调用、缓存与混音。剧本生成、场景匹配、画面、字幕、口型、FFmpeg 合成全部离线，`tts` 是唯一联网点。每句台词一次请求，成功后按台词哈希缓存到 `assets/audio/tts/`，命中缓存不再联网；网络类失败单句重试一次。不想联网就把 `tts.active` 改回 `unconfigured`，或把 `command` 换成完全离线的本地语音引擎。
+
+**本机先装一次包**：`python -m pip install edge-tts`（装包这一步联网，无需 API 密钥）。`config/providers.json` 的 `tts` 已是完整 command 配置，角色级音色在 `config/characters.json` 的 `voices` 里。导出前会做一次本机自检：PATH 里多个 Python 共存时，自动挑能 `import edge_tts` 的那个；也可设环境变量 `THAI_VIDEO_TTS_PYTHON=<python.exe 绝对路径>`，或把 `tts.command` 直接写成绝对路径。看到 `No module named edge_tts` 是**本机缺包，不是断网**，导出结果会给出针对性的安装命令，不会再提示「等网络恢复」。换引擎只需改 `command` / `args`，模板占位符：
 
 - `{text}` 台词，`{voice}` 声音名，`{language}` zh/th
 - `{output}` 输出文件路径，`{shotId}` 镜头 ID
@@ -98,7 +102,7 @@
 
 **渲染很慢 / 想切页面**：渲染是后台任务，可切页面；导出页轮询任务状态，回来继续显示进度。任务记录持久化，关程序重启也不丢。
 
-**成片没有说话声**：先确认 `python -m edge_tts --version` 能跑通且可联网；离线或命令失败时该句会退回字幕并在任务结果里写明，不会拿假人声冒充。按第 4 节排查。
+**成片没有说话声**：先看导出页的配音诊断，分清两类原因——「本机 Python 缺少 edge_tts 模块」与网络无关，按第 4 节装包或指定解释器；「配音服务联网失败」才是等联网恢复后重新导出（已成功的句子命中本地缓存）。点「查看逐句原始报错」可展开完整报错，不会再被截断成 `No module named edg`。失败镜头退回字幕并明确告警，不会拿假人声冒充。
 
 **output 里出现很多临时文件**：中间产物放在 `data/render-tmp/` 与系统临时目录，导出完成后异步清理；成片列表会跳过隐藏目录，只显示 `output/` 下的媒体文件。
 

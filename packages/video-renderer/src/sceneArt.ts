@@ -7,9 +7,33 @@
  * - 以后接真实图像模型时，只要把 shot.generatedImagePath 作为底图替换掉即可。
  */
 import type { Character, ExportMode, Scene, Shot } from '@thai-video/core/types';
+// 只从纯计算模块取类型：前端预览复用 sceneArt 时，不会顺着 mouth.ts 拉进 node:fs。
+import type { MouthShape } from './mouthCore.js';
 
 export const FRAME_WIDTH = 1080;
 export const FRAME_HEIGHT = 1920;
+
+/**
+ * 人物参考图 + 实测嘴部位置（坐标单位都是图片原始像素）。
+ * 画面里用同一 viewBox 的 SVG 覆盖层画嘴，和 <img object-fit:contain> 共用一套
+ * preserveAspectRatio 映射，所以换图、换比例都不会出现「嘴贴歪」。
+ */
+export type CharacterArt = {
+  src: string;
+  width: number;
+  height: number;
+  mouthX: number;
+  mouthY: number;
+  mouthW: number;
+  /**
+   * 原图里嘴本身的高度（像素，来自 calibration.json 的 mouthSize[1]）。
+   * 有的角色（吨吨）原嘴就是 59px 高的张嘴笑，有的（妮娜/阿顿）只是一条 12px 细线；
+   * 不按这个高度盖底图，吨吨闭嘴档会永远张着嘴、小口型还会露出原嘴黑边。
+   */
+  mouthH?: number;
+  /** 原图肤色，用来把静态嘴盖掉；补丁与人物图同组 multiply，不会留亮斑。 */
+  skin?: string;
+};
 
 const esc = (value: unknown): string => String(value ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -407,7 +431,128 @@ const eyebrows = (kind: ExpressionKind): string => {
   }
 };
 
-const characterSvg = (character: Character, expression: string, speaking: boolean): string => {
+const MOUTH_INK = '#3a2a2a';
+const MOUTH_CAVITY = '#5e2c34';
+const MOUTH_TONGUE = '#ce7078';
+
+/**
+ * 四档口型，几何沿用 scripts/demo_animation.py 的 mouth_tiles：
+ * 以实测嘴宽为基准、上唇为锚点向下张开，避免「上下一起放大顶到鼻子」。
+ * 单位与 CharacterArt 一致（图片原始像素），所以贴图和立绘天然对齐。
+ */
+const mouthShapeSvg = (art: CharacterArt, shape: MouthShape): string => {
+  const { mouthX: cx, mouthY: cy, mouthW: mw } = art;
+  const lw = Math.max(2.4, mw * 0.055);
+  const r = (n: number): number => Math.round(n * 100) / 100;
+  if (shape === 'closed') {
+    const w = mw * 0.92;
+    const h = mw * 0.30;
+    return `<path d="M${r(cx - w / 2)} ${r(cy - h * 0.10)} Q${r(cx)} ${r(cy + h * 0.75)} ${r(cx + w / 2)} ${r(cy - h * 0.10)}" fill="none" stroke="${MOUTH_INK}" stroke-width="${r(lw)}" stroke-linecap="round"/>`;
+  }
+  const specs: Record<Exclude<MouthShape, 'closed'>, [number, number, number]> = {
+    small: [0.66, -0.06, 0.30],
+    open: [0.78, -0.08, 0.46],
+    wide: [0.60, -0.09, 0.56],
+  };
+  const [wr, off, hr] = specs[shape];
+  const bw = mw * wr;
+  const bh = mw * hr;
+  const top = cy + off * mw;
+  const midY = top + bh / 2;
+  const tongue = shape === 'small' ? '' :
+    `<ellipse cx="${r(cx)}" cy="${r(top + bh * 0.76)}" rx="${r(bw * 0.30)}" ry="${r(bh * 0.20)}" fill="${MOUTH_TONGUE}"/>`;
+  return `<ellipse cx="${r(cx)}" cy="${r(midY)}" rx="${r(bw / 2)}" ry="${r(bh / 2)}" fill="${MOUTH_CAVITY}" stroke="${MOUTH_INK}" stroke-width="${r(lw)}"/>${tongue}`;
+};
+
+/**
+ * 参考图上的口型覆盖层：先用肤色盖掉原图那条静态嘴，再画四档新嘴。
+ *
+ * 不能只靠「张嘴档盖住原嘴」：三个角色的原嘴差别很大——妮娜/阿顿是一条
+ * 12px 的微笑细线，吨吨却是一个 116×59 已经张开的黑色口腔。以前按「原嘴都是
+ * 一条细线」写，吨吨闭嘴档永远咧着嘴、小口型还会上下露出原嘴黑边。
+ *
+ * preserveAspectRatio="xMidYMax meet" 与 .person-photo 的
+ * object-fit:contain + object-position:center bottom 是同一套映射规则，
+ * 因此 SVG 里的原图坐标就是屏幕上看到的同一位置，不需要 JS 量尺寸。
+ * 补丁与人物图放在同一个 .photo-blend 组里一起 multiply，两者被同一场景色
+ * 压暗，脸上不会多出一块亮斑。
+ */
+const photoMouthPatch = (art: CharacterArt, uid: string): string => {
+  const { mouthX: cx, mouthY: cy, mouthW: mw } = art;
+  const mh = art.mouthH ?? mw * 0.2;
+  const w = mw * 1.26;
+  const h = Math.max(mh * 1.36, mw * 0.22);
+  const blur = Math.min(3, Math.max(1.2, mw * 0.022));
+  const r = (n: number): number => Math.round(n * 100) / 100;
+  const skin = esc(art.skin ?? '#d9a97d');
+  // 外层轻微羽化边缘，内层完全不透明，保证连吨吨的黑色口腔也被盖干净。
+  return `<defs><filter id="mouthPatch-${uid}" x="-25%" y="-60%" width="150%" height="220%">
+      <feGaussianBlur stdDeviation="${r(blur)}"/></filter></defs>
+    <rect x="${r(cx - w / 2)}" y="${r(cy - h / 2)}" width="${r(w)}" height="${r(h)}"
+      rx="${r(h / 2)}" fill="${skin}" filter="url(#mouthPatch-${uid})"/>
+    <rect x="${r(cx - w / 2 + blur)}" y="${r(cy - h / 2 + blur)}"
+      width="${r(w - blur * 2)}" height="${r(h - blur * 2)}"
+      rx="${r((h - blur * 2) / 2)}" fill="${skin}"/>`;
+};
+
+const photoMouthSvg = (art: CharacterArt, shape: MouthShape): string => {
+  const { mouthX: cx, mouthY: cy, mouthW: mw } = art;
+  const lw = Math.max(2.4, mw * 0.055);
+  const r = (n: number): number => Math.round(n * 100) / 100;
+  if (shape === 'closed') {
+    const w = mw * 0.86;
+    const h = Math.max(6, mw * 0.18);
+    return `<path d="M${r(cx - w / 2)} ${r(cy - h * 0.10)} Q${r(cx)} ${r(cy + h * 0.70)} ${r(cx + w / 2)} ${r(cy - h * 0.10)}" fill="none" stroke="${MOUTH_INK}" stroke-width="${r(lw)}" stroke-linecap="round"/>`;
+  }
+  const sizes: Record<Exclude<MouthShape, 'closed'>, [number, number]> = {
+    small: [1.10, 0.24],
+    open: [1.22, 0.44],
+    wide: [1.34, 0.72],
+  };
+  const [wr, hr] = sizes[shape];
+  const bw = mw * wr;
+  const bh = mw * hr;
+  const x = cx - bw / 2;
+  // 上缘略高于原嘴中心，嘴以原上唇为锚点向下张开，不会顶到鼻子
+  const y = cy - bh * 0.42;
+  const tongue = shape === 'small' ? ''
+    : `<ellipse cx="${r(cx)}" cy="${r(y + bh * 0.72)}" rx="${r(bw * 0.28)}" ry="${r(bh * 0.18)}" fill="${MOUTH_TONGUE}"/>`;
+  return `<rect x="${r(x)}" y="${r(y)}" width="${r(bw)}" height="${r(bh)}" rx="${r(bh / 2)}" fill="${MOUTH_CAVITY}" stroke="${MOUTH_INK}" stroke-width="${r(lw)}"/>${tongue}`;
+};
+
+const mouthOverlay = (art: CharacterArt, shape: MouthShape, uid: string): string =>
+  `<svg class="mouth-overlay" viewBox="0 0 ${art.width} ${art.height}" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+    ${photoMouthPatch(art, uid)}${photoMouthSvg(art, shape)}
+  </svg>`;
+
+/** 没有参考图时程序化小人的嘴也跟着动（表情眉眼保持不变）。 */
+const FALLBACK_ART: CharacterArt = {
+  src: '', width: 240, height: 420, mouthX: 120, mouthY: 182, mouthW: 36,
+};
+
+/** 老调用只给 data URI、没给标定数据时，按标准 2:3 立绘取一个安全默认位置。 */
+const defaultArt = (src: string): CharacterArt => ({
+  src, width: 1024, height: 1536,
+  mouthX: 512, mouthY: 384, mouthW: 72,
+});
+
+/**
+ * 有人物参考图（上传的或资源库选的）就贴真图，没图才回退到程序化 SVG 小人。
+ * 说话的人额外叠一层口型：由服务端按配音能量逐帧选择 closed/small/open/wide，
+ * 不说话的人保持原图的静态嘴，不会被盖掉。
+ */
+const characterSvg = (
+  character: Character, expression: string, speaking: boolean,
+  art?: CharacterArt, mouthShape?: MouthShape,
+): string => {
+  if (art) {
+    return `<div class="person-photo-wrap">
+      <div class="photo-blend">
+        <img class="person-photo" src="${esc(art.src)}" alt="${esc(character.name)}"/>
+        ${speaking && mouthShape ? mouthOverlay(art, mouthShape, esc(character.id)) : ''}
+      </div>
+    </div>`;
+  }
   const look = lookFor(character.id);
   const kind = expressionOf(expression);
   const eyebrow = eyebrows(kind);
@@ -431,7 +576,7 @@ const characterSvg = (character: Character, expression: string, speaking: boolea
   <circle cx="98" cy="149" r="2" fill="#fff"/><circle cx="146" cy="149" r="2" fill="#fff"/>
   <ellipse cx="78" cy="172" rx="12" ry="7" fill="#e88f81" opacity="0.35"/>
   <ellipse cx="162" cy="172" rx="12" ry="7" fill="#e88f81" opacity="0.35"/>
-  ${mouth(kind)}
+  ${speaking && mouthShape ? mouthShapeSvg(FALLBACK_ART, mouthShape) : mouth(kind)}
   ${look.beard ? '<path d="M78 188 q42 44 84 0 q-8 42 -42 44 q-34 -2 -42 -44 Z" fill="#4a4038" opacity="0.55"/>' : ''}
   <circle cx="120" cy="330" r="7" fill="${look.accessory}" opacity="0.85"/>
   ${speaking ? '<ellipse cx="120" cy="408" rx="108" ry="18" fill="#fff" opacity="0.16"/>' : ''}
@@ -457,6 +602,15 @@ export type FrameInput = {
   durationSec?: number;
   /** 有真人配音时字幕区不显示「仅字幕」提示 */
   voiceOver?: boolean;
+  /**
+   * 人物 id → 参考图的内联 data URI（旧调用兼容）。
+   * 必须是 data URI：截图时浏览器以 file:// 打开 HTML，`/assets/...` 这种外链加载不到。
+   */
+  characterImages?: Record<string, string>;
+  /** 人物 id → 参考图 + 实测嘴部坐标；优先于 characterImages */
+  characterArt?: Record<string, CharacterArt>;
+  /** 本帧说话人的口型。不传时保持原来的情绪嘴型（静态预览/测试用） */
+  mouthShape?: MouthShape;
 };
 
 const MODE_LABEL: Record<ExportMode, string> = {
@@ -491,9 +645,28 @@ const shell = (body: string, p: Palette): string => `<!doctype html>
           justify-content:center;gap:12px;padding:0 40px}
   .person{width:340px;height:600px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
           transform-origin:bottom center;transition:none}
-  .person:not(.speaking){opacity:.86}
-  .person.speaking{transform:scale(1.13);filter:drop-shadow(0 18px 34px rgba(0,0,0,.42))}
+  /* 不用 opacity / transform / filter 修饰 .person：它们会创建层叠上下文，
+     把里面人物图的 mix-blend-mode 隔离掉，浅色底就没法融进场景。 */
+  .person:not(.speaking) .nameplate{opacity:.8}
+  .person.speaking{zoom:1.13}
+  .person.speaking .person-svg{filter:drop-shadow(0 18px 34px rgba(0,0,0,.42))}
   .person-svg{width:100%;height:100%}
+  /* 人物图 + 口型层先在组内正常合成，再整组 multiply 融进场景。
+     只让 img 混色的话，口型层的肤色补丁会以原始亮度盖在被压暗的脸上，留一块亮斑；
+     组内合成后补丁与脸被同一个场景色压暗，色差消失。 */
+  .person-photo-wrap{position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+  .photo-blend{position:absolute;inset:0;mix-blend-mode:multiply;
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 7%,#000 96%,transparent 100%),
+                       linear-gradient(to right,transparent 0%,#000 9%,#000 91%,transparent 100%);
+    mask-image:linear-gradient(to bottom,transparent 0%,#000 7%,#000 96%,transparent 100%),
+               linear-gradient(to right,transparent 0%,#000 9%,#000 91%,transparent 100%);
+    -webkit-mask-composite:source-in;mask-composite:intersect}
+  /* 资源库/上传图是纯浅色底：整组 multiply 让底色融进场景，深色描线与服装留下来，
+     再叠上下 + 左右渐隐，避免出现「贴了两张白底照片」的硬矩形。 */
+  .person-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;border-radius:24px;
+    filter:drop-shadow(0 14px 28px rgba(0,0,0,.34))}
+  /* 口型覆盖层与人物图共用 xMidYMax meet / object-fit:contain 的映射，天然对齐 */
+  .mouth-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
   .nameplate{margin-bottom:14px;padding:8px 24px;border-radius:999px;font-size:26px;font-weight:700;
              background:rgba(20,18,28,.58);border:1px solid rgba(255,255,255,.24);color:#fff;white-space:nowrap}
   .person.speaking .nameplate{background:${p.accent};color:#1b1420;border-color:rgba(255,255,255,.55)}
@@ -530,18 +703,25 @@ export const buildShotFrame = (input: FrameInput): string => {
   const sizes = subtitleSizes(main, secondary);
   const cast = (input.characters ?? []).slice(0, 3);
   const speaker = cast.find((c) => c.id === input.speakerId) ?? cast[0] ?? null;
+  const artFor = (c: Character): CharacterArt | undefined => {
+    const calibrated = input.characterArt?.[c.id];
+    if (calibrated) return calibrated;
+    const legacy = input.characterImages?.[c.id];
+    return legacy ? defaultArt(legacy) : undefined;
+  };
   const people = cast.map((c) => {
     const speaking = c.id === (input.speakerId ?? cast[0]?.id);
     // 名字牌语言跟随导出版本，中文版不再混进泰文名
     const plate = input.mode === 'th' ? (c.nameTh || c.name) : c.name;
     return `<div class="person ${speaking ? 'speaking' : ''}">
       <div class="nameplate">${esc(plate)}</div>
-      ${characterSvg(c, `${input.shot?.expression ?? ''} ${input.shot?.action ?? ''}`, speaking)}
+      ${characterSvg(c, `${input.shot?.expression ?? ''} ${input.shot?.action ?? ''}`, speaking, artFor(c), input.mouthShape)}
     </div>`;
   }).join('');
+  // 情境/旁白镜头没有出场人物，字幕不署名：旁白不是说话人，不该显示成一个「人」。
   const speakerName = speaker
     ? (input.mode === 'th' ? (speaker.nameTh || speaker.name) : speaker.name)
-    : (input.mode === 'th' ? 'ผู้บรรยาย' : '旁白');
+    : '';
   const sceneLabel = input.mode === 'th'
     ? (input.scene?.name ?? 'กรุงเทพมหานคร')
     : (input.scene?.name ?? p.label);
@@ -558,7 +738,7 @@ export const buildShotFrame = (input: FrameInput): string => {
     <div class="people">${people}</div>
     <div class="caption"></div>
     <div class="caption-inner" style="--main-size:${sizes.main}px;--secondary-size:${sizes.secondary}px">
-      ${main ? `<div class="speaker">${esc(speakerName)}</div>` : ''}
+      ${main && speakerName ? `<div class="speaker">${esc(speakerName)}</div>` : ''}
       <div class="main">${esc(main)}</div>
       ${secondary ? `<div class="secondary">${esc(secondary)}</div>` : ''}
     </div>
